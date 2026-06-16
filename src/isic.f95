@@ -3,15 +3,16 @@
 !*     iSIC - Stochastic Nonsmooth Optimization based                    *
 !*     Incremental Clustering Software (bigClust version 2.0)            *
 !*                                                                       *
-!*     iSIC differs from original bigClust mainly by using               *
-!*     stochastic inexaxtLMBM as an optimization engine.                 * 
+!*     iSIC differs from original bigClust by using                      *
+!*     stochastic inexactLMBM as an optimization engine and              *
+!*     greedy starting point selection procedure.                         * 
 !*                                                                       *
 !*     Napsu Karmitsa 2026 (last modified 14.4.2026).                    *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
 !*                                                                       *
-!*     iSIC software is covered by the MIT license.                 *
+!*     iSIC software is covered by the MIT license.                      *
 !*                                                                       *
 !*************************************************************************
 !*
@@ -43,11 +44,11 @@
 !*
 !*     for BigClust:
 !*       N. Karmitsa, V.-P. Eronen, M.M. Mäkelä, A. Airola, T. Pahikkala, "Stochastic limited 
-!*       memory bundle method for clustering in big data", 2024
+!*       memory bundle method for clustering in big data", Pattern Recognition, Vol. 165, 111654, 2025.
 !*
 !*     for inexactLMBM:
-!*       N. Karmitsa, V.-P. Eronen, M.M. Mäkelä, A. Airola, T. Pahikkala, "Stochastic limited 
-!*       memory bundle method for clustering in big data", 2024
+!*       J. Lampainen, K. Joki, N. Karmitsa, M.M. Mäkelä, "Inexact limited memory bundle method",
+!*       submitted 2026, https://arxiv.org/abs/2604.08067
 !*
 !*     for original LMBM:
 !*       N. Haarala, K. Miettinen, M.M. Mäkelä, "Globally Convergent Limited Memory Bundle Method  
@@ -60,7 +61,7 @@
 !*
 !*     for clustering:
 !*       A. Bagirov, N. Karmitsa, S Taheri, "Partitional Clustering via Nonsmooth Optimization",
-!*       Springer, 2020.
+!*       Springer, 2020 (2025 2nd edition).
 !*
 !*     for NSO:
 !*       A. Bagirov, N. Karmitsa, M.M. Mäkelä, "Introduction to nonsmooth optimization: theory, 
@@ -91,7 +92,7 @@ PROGRAM isic
         a, &                            ! Data matrix a(nft,nrecord), from input file.
         a_used, &                       ! Partial data matrix a(nft,nrec_used), from input file.
         xbest, &                        ! Best solution obtained
-        f_prev_nc, &                    ! Objective value from the previous nc (nc-1 clusters) HIHU 22.5.2026
+        f_prev_nc, &                    ! Objective value from the previous nc (nc-1 clusters) 
         dcent, &                        ! Distance (affinity) matrix for cluster centers
         tlimit, &                       ! Time limit, from user.
         tnorm, &                        ! The total number of norms computed.
@@ -105,7 +106,6 @@ PROGRAM isic
                                         !   m = nft    if ns = 1,
                                         !   m = nft*nc if ns = 2.
         m1, &                           ! Maximum number of initial solutions.
-        ng1,ng2, &                      ! Threshold parameters, ng1,ng2 <= 100
         lcand, &
         def_clustpar                    ! Default values of clustering parameters.
     USE initislmb, ONLY : &             ! 
@@ -116,7 +116,7 @@ PROGRAM isic
                                         !     0  - Totally random batches
                                         !     1  - Random batches such that all indices are used at least once      
         batchind
-    USE obj_fun, ONLY : clustfull2      ! Computation of full cluster function value
+    USE obj_fun, ONLY : clustfull,clustfull2      ! Computation of full cluster function value
     USE clusteringmod                   ! Subprograms for clustering.
     USE islmb_mod, ONLY : islmb_init      ! SLMB method for optimization.
     USE exe_time, ONLY : getime         ! Execution time.
@@ -125,33 +125,14 @@ PROGRAM isic
 
 
     REAL(KIND=prec), DIMENSION(:), allocatable :: &
-        x, &
-        xold, &
-        z, &
-        x6
-    REAL(KIND=prec), DIMENSION(:), allocatable :: &
-        x2, &
-        x5
-    REAL(KIND=prec), DIMENSION(:), allocatable :: &
-        amed
-    REAL(KIND=prec), DIMENSION(:), allocatable :: &
-        fval, &
-        fval1, &
-        fval2
+        x, x2
     REAL(KIND=prec) :: &
         barf, &
-        fbarmin1, &
-        fbarmin2, &
         db,db2,dn,dn3,sep, & !validity indices
-        f, fold, &
-        f31, &
-        fbarmin, &
-        fbest, &
+        f, &
+        fold, &
         fclust1, &
-        fcurrent, &
-        gamma03, &
-        gamma04, &
-        toler
+        fcurrent 
     REAL :: &
         time1, &
         time3, &
@@ -161,11 +142,6 @@ PROGRAM isic
         ns2time
     INTEGER :: &
         i,j,k,k1,j1, &
-        ibarfmin, & 
-        nstart, &
-        nstart1, &
-        nstart2, &
-        counter, &
         nseed
     REAL :: urand    ! Random number
     !character(len=10):: junk  ! Needed e.g. with cord_19_embeddings_2022-06-02.csv
@@ -190,13 +166,12 @@ PROGRAM isic
     call random_seed(put=seed)
 
     CALL def_clustpar()
-    fold = large
     do i=1,nrec_used
         batchind(i)=i
     end do
 
-    allocate(x(nclust*nft),xold(nclust*nft),z(nclust*nft),x6(nclust*nft),amed(nft),fval(m1),fval1(m1),fval2(m1),lcand(nrec_used))
-    allocate(x2(maxsize),x5(maxsize))
+    allocate(x(nclust*nft),lcand(nrec_used))
+    allocate(x2(maxsize))
 
 
     OPEN(40,file=outfile0) ! Cluster centers
@@ -207,7 +182,7 @@ PROGRAM isic
     !==================================================================
     !   Initializing output
     !==================================================================
-    WRITE(40, *) 'iBigClust: Cluster centers'
+    WRITE(40, *) 'iSIC: Cluster centers'
     WRITE(40, *)
     WRITE(40, *) 'This file contains the final cluster centers with k =',nclust,' clusters and'
     WRITE(40, *) 'the solutions to all intermediate l-clustering problems with l = 1,...,k-1. '
@@ -231,7 +206,7 @@ PROGRAM isic
     WRITE(42, *) 'Type of data:            ',ibig
                 !     0  - Large data
                 !     1  - Big data (no computations with full data)
-    WRITE(42, *) 'Parameters:              ',m1,ng1,ng2
+    WRITE(42, *) 'Max. canditate starting points: ',m1 
     WRITE(42, *) 'Seed for random numbers: ',seed(1)
     
     WRITE(42, *) 'Optimization with inexact SLMB.'
@@ -251,7 +226,7 @@ PROGRAM isic
         CALL getime(cputotal) 
         !READ(78,*) ! read the first line (needed e.g. with Range-Queries-Aggregates.csv)
         DO i=1,nrecord 
-        !    READ(78,'(A)', ADVANCE='NO') junk ! read the first char (needed e.g. with cord_19_embeddings_2022-06-02.csv)
+            !READ(78,'(A)', ADVANCE='NO') junk ! read the first char (needed e.g. with cord_19_embeddings_2022-06-02.csv)
             READ(78,*) (a(k,i),k=1,nft)
         END DO
         CALL getime(usertimetotal) 
@@ -260,17 +235,23 @@ PROGRAM isic
         ! We always read the whole data
     !end if 
     
-    fold = large
     CALL getime(time1) 
 
     ! Read random partial data matrix
     if (nrecord /= nrec_used) then
-        do i=1,nrec_used ! 
-            call random_number(urand)
-            j = i + FLOOR((nrecord+1-i)*urand)  !
-            do k=1,nft !
-                a_used(k,i)=a(k,j)
+        do i = 1, nrec_used
+            do k = 1, nft
+                a_used(k,i) = a(k,i)
             end do
+        end do
+        do i = nrec_used + 1, nrecord
+            call random_number(urand)
+            j = 1 + INT(REAL(i, prec) * urand)
+            if (j <= nrec_used) then
+                do k = 1, nft
+                    a_used(k,j) = a(k,i)
+                end do
+            end if
         end do
     else if (ibig == 0) then
         do i=1,nrec_used 
@@ -298,145 +279,31 @@ PROGRAM isic
             else if (nrecord*nft > 1000000) then
                 m1  = max(m1-50,200)
             end if
-            ng1 = max(ng1-10,10)
-            !ng2 = max(ng2-10,20)
-!            toler=1.0E-04_prec*fclust1/REAL(nc,prec)
-            !toler = 1.0_prec*f/REAL(nrec_used,prec) ! HIHU muutettu 8.5.2026
-            toler = 1.0_prec*f/REAL(nc*nrec_used,prec) ! HIHU muutettu 25.5.2026
-            f_prev_nc = f ! HIHU 22.5.2026
+            f_prev_nc = f !
             CALL getime(inittime) 
-            CALL step2(toler,nstart,x2) !  Step2 computes clusters for each data point and gives inital points
+            CALL step2(x2) !  Step2 computes clusters for each data point and gives inital points
             CALL getime(time4) 
             inittime = time4 - inittime
-            fbarmin=large
-            ns1time=0.0
-            nstart = 1 ! HIHU testi 8.5.2026
-            !print*,'Number of aux-problems: ',nstart
-
             ns=1 ! Auxiliary clustering problem
-                
-            DO j=1,nstart ! Step 3 in SLMB-Clust algorithm
-                DO k=1,nft
-                    z(k)=x2(k+(j-1)*nft)
-                END DO
-                CALL islmb_init(z,x2((j-1)*nft+1:(j-1)*nft+nft),barf,time4) ! Call for SLMB
+
+            CALL islmb_init(x2(1:nft),barf,time4) ! Call for inexact SLMB
+            ns1time=time4
             
-                ns1time=ns1time+time4
-                fval(j)=barf
-                IF (fbarmin > barf) THEN
-                    fbarmin=barf
-                    ibarfmin=j
-                END IF                
-    
-            END DO
-            !nstart=1 ! HIHU testi 8.5.2026
-
-            nstart2=MAX(1,ng2*nstart/100)
-            gamma04=one
-
-            ! Add ifbarmin as center
-            nstart1=1
-            DO k=1,nft
-                x5(k)=x2(k+(ibarfmin-1)*nft)
-            END DO
-            fval2(1)=fbarmin
-
-
-            counter=0
-            loop871: DO
-                
-                gamma03=gamma04
-                gamma04=gamma04+1.0d-02
-                fbarmin1=gamma03*fbarmin
-                fbarmin2=gamma04*fbarmin
-            
-                DO j=1,nstart
-                    IF(nstart1 >= nstart2) EXIT loop871 
-                    IF (j==ibarfmin) CYCLE 
-                    IF ((fval(j) >= fbarmin1).AND.(fval(j) < fbarmin2)) THEN
-                        nstart1=nstart1+1
-                        DO k=1,nft
-                            x5(k+(nstart1-1)*nft)=x2(k+(j-1)*nft)
-                        END DO
-                        fval2(nstart1)=fval(j)
-                    END IF
-
-                END DO
-                counter = counter + 1
-                if (counter > 10000) then
-                    print *,'Warning: loop871 in iBigClust failed.',nstart1,nstart2,fbarmin1, fbarmin2
-                    EXIT loop871
-                end if
-            END DO loop871
-
-
-            nstart=nstart1
-            DO i=1,nstart
-                fval(i)=fval2(i)
-            END DO
-            DO i=1,nstart
-                DO k=1,nft
-                    x2(k+(i-1)*nft)=x5(k+(i-1)*nft)
-                END DO
-            END DO
-
-            fval1(1)=fval(1)
-            nstart2=1
-            innerloop: DO j=2,nstart
-                DO j1=1,nstart2
-                    f31=zero
-                    DO k=1,nft
-                        f31=f31+(x5(k+(j1-1)*nft)-x2(k+(j-1)*nft))**2
-                    END DO
-                    IF(f31 <= (toler)) THEN ! 8.5.2026
-!                    IF(f31 <= (1.0E-01_prec*toler)) THEN
-                            IF(fval1(j1) >= fval(j)) THEN
-                            fval1(j1)=fval(j)
-                            DO k=1,nft
-                                x5(k+(j1-1)*nft)=x2(k+(j-1)*nft)
-                            END DO
-                        END IF
-                        CYCLE innerloop
-                    END IF
-                END DO
-                nstart2=nstart2+1
-                DO k=1,nft
-                    x5(k+(nstart2-1)*nft)=x2(k+(j-1)*nft)
-                END DO
-                fval1(nstart2)=fval(j)
-            END DO innerloop
-                
-            DO i=1,nstart2
-                DO k=1,nft
-                    x2(k+(i-1)*nft)=x5(k+(i-1)*nft)
-                END DO
-            END DO 
-            nstart=nstart2
-
             m=nft*nc
-            fbest=large
             ns2time=0.0
-            !print*,'Number of clustering problems: ',nstart
 
-            DO j=1,nstart
-                DO i=1,nft
-                    x(i+(nc-1)*nft)=x2(i+(j-1)*nft)
-                END DO
-                ns=2
-                CALL islmb_init(x,x6,fcurrent,time4) ! Call for inexact SLMB
-                ! Returns fcurrent in whole data sample not only in batch.
-
-                ns2time=ns2time+time4
-                IF (fcurrent < fbest) THEN
-                    fbest=fcurrent
-                    DO j1=1,m
-                        xbest(j1)=x6(j1)
-                    END DO
-                END IF
+            DO i=1,nft
+                x(i+(nc-1)*nft)=x2(i)
             END DO
-            f=fbest
+            ns=2
+            CALL islmb_init(x,fcurrent,time4) ! Call for inexact SLMB
+            ! Returns fcurrent in batch.
+
+            ns2time=time4
+            CALL clustfull(x, f) !
+
             DO j1=1,m
-                x(j1)=xbest(j1)
+                xbest(j1)=x(j1)
             END DO
 
             
@@ -467,6 +334,9 @@ PROGRAM isic
             ns2time=0.0
             CALL step1(f,x) ! computes the centroid and the value of clustering function at the centroid
             fclust1=f 
+            DO j1=1,nft ! xbest for aux-problem
+                xbest(j1)=x(j1)
+            END DO
             
 
             !================================================================
@@ -492,12 +362,19 @@ PROGRAM isic
 
         ! Read random partial data matrix
         if (nrecord /= nrec_used) then
-            do i=1,nrec_used ! 
-                call random_number(urand)
-                j = i + FLOOR((nrecord+1-i)*urand)  !
-                do k=1,nft !
-                    a_used(k,i)=a(k,j)
+            do i = 1, nrec_used
+                do k = 1, nft
+                    a_used(k,i) = a(k,i)
                 end do
+            end do
+            do i = nrec_used + 1, nrecord
+                call random_number(urand)
+                j = 1 + INT(REAL(i, prec) * urand)
+                if (j <= nrec_used) then
+                    do k = 1, nft
+                        a_used(k,j) = a(k,i)
+                    end do
+                end if
             end do
         end if
     
@@ -508,34 +385,25 @@ PROGRAM isic
             DO k1=k+1,nc
                 dcent(k,k1)=zero
                 DO j=1,nft
-                    dcent(k,k1)=dcent(k,k1)+(xbest(j+(k-1)*nft)-xbest(j+(k1-1)*nft))**2
+                    dcent(k,k1)=dcent(k,k1)+(x(j+(k-1)*nft)-x(j+(k1-1)*nft))**2
                 END DO
                 dcent(k1,k)=dcent(k,k1)
             END DO
         END DO
 
+        ! Subsample resampled between optimization and evaluation
         CALL getime(inittime2) 
         CALL check(x,f,db,db2,dn,dn3,sep) ! checks the results and computes validity indices
         CALL getime(time4) 
         
         inittime2 = time4 - inittime2
-        if (ibig == 0) then ! We do not compute this with big data
-            if (nrecord /= nrec_used) then ! or if entire data set is used
-                call clustfull2(x,f)
-            end if
-            if (fold < f) then
-                do i=1,nft
-                    xold((nc-1)*nft+i)=a_used(i,1) ! We may have better options, but this is quick.
-                end do
-                call clustfull2(xold,f)
-                fold=f
-                x=xold
-            else
-                fold=f
-                xold=x
-            end if
-        end if
 
+        !if (ibig == 0) then ! We do not compute this with big data
+        fold = f    
+        if (nrecord /= nrec_used) then ! or if entire data set is used
+            call clustfull2(x,fold)
+        end if
+        
 
         CALL getime(time3)
 
@@ -552,8 +420,7 @@ PROGRAM isic
         WRITE(40,141) time4
         WRITE(40,*)
         WRITE(40,*)
-        WRITE(42,603) nc,f,db,dn,tnorm,time4,inittime,inittime2,ns1time,ns2time
-        !print*,'cpu time ',time4
+        WRITE(42,603) nc,fold,db,dn,tnorm,time4,inittime,inittime2,ns1time,ns2time
     END DO outerloop
     WRITE(42, *)
     
@@ -572,8 +439,8 @@ PROGRAM isic
     CLOSE(42)
     CLOSE(78)
         
-    deallocate(x,xold,z,x6,amed,fval,fval1,fval2,lcand)
-    deallocate(x2,x5)
+    deallocate(x,lcand)
+    deallocate(x2)
     deallocate(seed)
 
     STOP

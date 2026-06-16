@@ -3,15 +3,16 @@
 !*     iSIC - Stochastic Nonsmooth Optimization based                    *
 !*     Incremental Clustering Software (bigClust version 2.0)            *
 !*                                                                       *
-!*     iSIC differs from original bigClust mainly by using               *
-!*     stochastic inexaxtLMBM as an optimization engine.                 * 
+!*     iSIC differs from original bigClust by using                      *
+!*     stochastic inexactLMBM as an optimization engine and              *
+!*     greedy starting point selection procedure.                         * 
 !*                                                                       *
-!*     Napsu Karmitsa 2026 (last modified 26.5.2026).                    *
+!*     Napsu Karmitsa 2026 (last modified 16.6.2026).                    *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
 !*                                                                       *
-!*     iSIC software is covered by the MIT license.                 *
+!*     iSIC software is covered by the MIT license.                      *
 !*                                                                       *
 !*************************************************************************
 !*
@@ -31,7 +32,7 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
     ! Names of input and output files:
     CHARACTER(LEN=80), SAVE :: &
         !
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/drift.txt',&               ! 1 ok mahdollisesti x 2
+        infile = '../../../data/data_for_clustering/large_data_for_clustering/census.txt',&               ! 1 ok mahdollisesti x 2
         !infile = '../../../data/data_for_clustering/large_data_for_clustering/EEG_Eye_State2.txt',&       ! 2 ok
         !infile = '../../../data/data_for_clustering/large_data_for_clustering/d15112.txt',&           ! 3 ok
         !infile = '../../../data/data_for_clustering/large_data_for_clustering/KEGG2.txt',&     ! 4
@@ -43,10 +44,10 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
         !infile = '../../../data/data_for_clustering/large_data_for_clustering/isolet.txt',&      ! 11 ok
         !infile = '../../../data/data_for_clustering/large_data_for_clustering/OnlineNews.txt',&      ! 12 ok
         !infile = '../../../data/data_for_clustering/large_data_for_clustering/MiniBooNE_PID.txt',&      ! 13 ok
-        infile = '../../../data/data_for_clustering/large_data_for_clustering/gisette.txt',&      ! 14 ! ok
+        !infile = '../../../data/data_for_clustering/large_data_for_clustering/gisette.txt',&      ! 14 ! ok
     !infile = '../data/Skin_NonSkin.txt',&   ! Input data 
         outfile0 = 'isic_centers.txt', &         ! Result file with cluster centers.
-        !outfile1 = 'isic_results_drift.txt'              ! Result file with function values,
+        outfile1 = 'isic_results_current.txt'              ! Result file with function values,
         !outfile1 = 'isic_results_eeg_test.txt'           ! Result file with function values,
         !outfile1 = 'isic_results_d15112.txt'             ! Result file with function values,
         !outfile1 = 'isic_results_Kegg.txt'               ! Result file with function values,
@@ -58,15 +59,15 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
         !outfile1 = 'isic_results_isolet.txt'             ! Result file with function values,
         !outfile1 = 'isic_results_news.txt'               ! Result file with function values,
         !outfile1 = 'isic_results_miniboone.txt'          ! Result file with function values,
-        outfile1 = 'isic_results_gisette.txt'              ! Result file with function values,
+        !outfile1 = 'isic_results_gisette.txt'              ! Result file with function values,
                                                 ! Davies-Bouldin (DB) validity index,
                                                 ! and cpu-time.
         
     ! Input integer parameters. Give values here.
     INTEGER, PARAMETER :: &
         nclust = 25, &          ! Maximum number of clusters, from user.
-        !nft  = 128, &          ! Number of features in data, from user. 1
-        !nrecord = 13910, &     ! Number of recorts in data, from user. 1
+        nft  = 68, &            ! Number of features in data, from user. 1
+        nrecord = 2458285, &    ! Number of records in data, from user. 1
         !nft  = 14, &           ! 2
         !nrecord = 14980, &     ! 2
         !nft = 2, &             ! 3
@@ -89,15 +90,15 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
         !nrecord = 39644, &      !12
         !nft = 50, &               !13
         !nrecord = 130064, &      !13
-        nft = 5000, &               !14
-        nrecord = 13500, &      !14
+        !nft = 5000, &               !14
+        !nrecord = 13500, &      !14
         
         !nft = 3, &                  ! Number of features in data, from user. Skin
         !nrecord = 245057, &         ! Number of records in data, from user. Skin
         !
         nrec_used = nrecord, &      ! Number of data points used at once in computations, nrec_used <= nrecord.
                                     !   E.g. nrec_used = nrecord if nrecord < 100000, nrec_used = MAX(nrecord/50,10000), otherwise.        
-        !nrec_used = int(MAX(nrecord/50.0,10000.0)), &   ! 
+        !nrec_used = int(MAX(nrecord/10.0,10000.0)), &   ! 
         ibig     = 0, &             ! parameter for the size of data, ibig=1 => no computations with whole data will be made
                                     ! note that this version 0.1 still reads the full data.
         ipc      = 0, &             ! Printout parameter for cluster centers (0 = no printout).
@@ -131,12 +132,10 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
                                     !   m = nft*nc if ns = 2.
         m1, &                       ! Maximum number of datapoints selected as initial 
                                     !   solutions, m1 <= nrecord. Initialized in def_clusterpar below.
-        ng1, &                      ! Threshold parameter, ng1 <= 10, affects the number of canditate points
-        ng2, &                      ! Threshold parameter, ng2 <= 10, affects the number of canditate points
         ncand, &                    ! Number of canditate points.
         list1(nrec_used), &         ! list1(i) gives the cluster where point i belongs.
         nel(nclust), &              ! nel(i) is the number of data points in cluster i.
-        nk(nclust,nrec_used), &     ! nk(i,j) (j=1,...,nel(i)) tells which data 
+        nk(nrec_used,nclust), &     ! nk(j,i) (j=1,...,nel(i)) tells which data 
                                     !   points are in cluster i.
         l4(nrec_used)               ! Auxiliary array
 
@@ -154,19 +153,12 @@ CONTAINS
 
         size = nrecord*nft
         IF (size < 1000000) THEN
-            m1=min(nrecord,500)  ! Maximum number of data points selected as initial solutions. 
+            m1=min(nrecord,500)  ! Maximum number of data points selected as initial solutions.                      
                                  ! m1 <= nrecord, indirect gamma1 in algorithm, Note that m1 is adaptive -> 200.
-            ng1=100              ! Percentace of initial points used to form initial centers 
-                                 !   for auxiliary problem (e.g. 80%). Note that ng1 is adaptive -> 10.
-            ng2=50               ! Percentace of auxiliary problem solutions used to form initial centers for clustering problem (e.g. 90%)
         ELSE IF (size <= 10000000) THEN
             m1=500
-            ng1=100 
-            ng2=20
         ELSE 
             m1=200 
-            ng1=100 
-            ng2=20
         END IF
 
     END SUBROUTINE def_clustpar
@@ -186,13 +178,13 @@ MODULE initislmb  ! Initialization of parameters for inexact SLMB.
     ! Parameters
     INTEGER, PARAMETER :: &
         na      = 10, &            ! Maximum bundle dimension, na >= 2. HIHU, onko tämä järkevä stokastisessa?
-        mcu     = 15, &            ! Maximum number of stored corrections, mcu >=1.
+        mcu     = 7, &            ! Maximum number of stored corrections, mcu >=1.
         mcinit  = 7, &             ! Initial maximum number of stored corrections, mcu >= mcinit >= 3.
                                    ! If mcinit <= 0, the default value mcinit = 3 will be used.
                                    ! However, the value mcinit = 7 is recommented.
         inma    = 1, &             ! Selection of optimization method:
                                    !   inma = 0, InexactLMBM with simple step size selection,
-                                   !   inma = 1, InexactLMBM with nonmonotone step size selction,
+                                   !   inma = 1, InexactLMBM with nonmonotone step size selection,
         mnma    = 5                ! Maximum number of function values used in nonmonotone line search.
         
 
@@ -217,18 +209,19 @@ MODULE initislmb  ! Initialization of parameters for inexact SLMB.
     ! Integer parameters (if value <= 0 the default value of the parameter will be used).
     INTEGER, SAVE :: & 
         n       = maxdim,  &      ! Number of variables (do not change)
-        !nbatch  = nrec_used, &   ! Size of the batch 1 <= nbatch <= nrecords
-        !maxbatch = 1, &          ! Number of different batches
-        !nth     = 5000, &        ! Number of iterations after which a new batch is selected
-        nbatch  = int(max(nrec_used/50.0,1000.0)), & ! Size of the batch 1 <= nbatch <= nrecords
+        nbatch  = int(max(SQRT(real(nrec_used))*10.0,1000.0)), & ! Size of the batch 1 <= nbatch <= nrecords
+                                  ! The √nrecord scaling is motivated by the fact that gradient variance scales as 1/nbatch, 
+                                  ! so to keep the relative noise level constant as the dataset grows you need nbatch ∝ nrecord. 
+                                  ! The square root is a compromise that avoids making batches prohibitively large for very large datasets.
+       !nbatch  = int(max(nrec_used/20.0,1000.0)), & ! Size of the batch 1 <= nbatch <= nrecords
         maxbatch = 100, &         ! Number of different batches (change in subroutine below)
         nth     = 10, &           ! Number of iterations after which a new batch is selected
                                   !    (change in subroutine below)
         batchtype = 0, &          ! Type for selecting the batches:
                                   !    0  - Totally random batches
                                   !    1  - Random batches such that all indices are used at least once      
-        mit     = 1000, &         ! Maximun number of iterations: mit = maxbatch*nth
-        mfe     = 1000, &         ! Maximun number of function evaluations: mfe = maxbatch*nth
+        mit     = 1000, &         ! Maximum number of iterations: mit = maxbatch*nth
+        mfe     = 1000, &         ! Maximum number of function evaluations: mfe = maxbatch*nth
         mtesf   = MAX(mnma+5,10), & ! Maximum number of iterations with changes of
                                   !   function values smaller than tolf (default = 10)
         iprint  =    1, &         ! Printout specification (only for real clustering problem, 
@@ -253,8 +246,8 @@ MODULE initislmb  ! Initialization of parameters for inexact SLMB.
                                   !     6  - No scaling
 
 
-    INTEGER, SAVE :: ib                            ! Index for batch 
-    REAL(KIND=prec), DIMENSION(maxdim), SAVE :: x  ! Vector of variables
+    INTEGER, SAVE :: ib                             ! Index for batch 
+    REAL(KIND=prec), DIMENSION(maxdim), SAVE :: x   ! Vector of variables
     INTEGER :: i
     INTEGER, DIMENSION(nrec_used), SAVE :: batchind ! Batch indices 
 
@@ -285,16 +278,14 @@ CONTAINS
 
     SUBROUTINE init_slmbpar()  ! Subroutine for further initialization of parameters.
 
-        USE initclust, ONLY : ns, nc
+        USE initclust, ONLY : ns, nc, nrec_used
         IMPLICIT NONE
 
         IF (ns == 1) THEN
             maxbatch = 1        ! Number of different batches (aux. problem)
-            nth     = 10        ! Number of iterations after which a new batch is selected
+            nth     = 20        ! Number of iterations after which a new batch is selected
         ELSE 
-            maxbatch = 20   
-            !maxbatch = MAX(20, MIN(100, 5 * nc))            
-            !maxbatch = 100      ! Number of different batches (clustering problem)
+            maxbatch = MAX(20, INT(0.15 * SQRT(REAL(nrec_used)))) ! Number of different batches (clustering problem)
             nth     = 10        ! Number of iterations after which a new batch is selected
         END IF
                 

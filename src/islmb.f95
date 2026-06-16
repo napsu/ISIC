@@ -6,12 +6,12 @@
 !*     by Napsu Karmitsa 2026 (last modified 17.4.2026)                  *
 !*                                                                       *
 !*     This file is specially modified to solve clustering problems      *
-!*     and it is part of iBigClust software.                             *
+!*     and it is part of iSIC software.                                  *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
 !*                                                                       *
-!*     The iBigClust software (including the iSLMB) is covered by the    *
+!*     iSIC software (including the iSLMB) is covered by the             *
 !*     MIT license.                                                      *
 !*                                                                       *
 !*************************************************************************
@@ -54,7 +54,7 @@ MODULE islmb_mod  ! Stochastic Inexact Limited Memory Bundle Method
 
 CONTAINS
 
-    SUBROUTINE islmb_init(x0,x1,fvalue,ns2time)
+    SUBROUTINE islmb_init(x1,fvalue,ns2time)
  
         USE initclust, ONLY : &
             maxdim, &      ! Maximum number of variables
@@ -76,7 +76,6 @@ CONTAINS
 
         REAL :: start,fini,ns2time 
         REAL(KIND=prec) ::  &
-            x0(nc*nft),     &
             x1(nc*nft),     &
             fvalue
 
@@ -96,9 +95,9 @@ CONTAINS
                            !                    such that 1.0 + small > 1.0.
                            !               4  - Number of function calls > mfe.
                            !               5  - Number of iterations > mit.
-                           !               6  - Time limit exceeded. hihu tämä on nyt klusterointi algoritmin puolella
+                           !               6  - Time limit exceeded. 
                            !               7  - f < tolb.
-                           !               8  - Maximum number of batches computed
+                           !               9  - Maximum number of batches computed
                            !              -1  - Two consecutive restarts.
                            !              -2  - Number of restarts > maximum number
                            !                    of restarts.
@@ -109,13 +108,13 @@ CONTAINS
                            !              -6  - Unspecified error.
         INTEGER :: i,mc
 
-        ! number of variables
+        ! Number of variables
         IF(ns.EQ.1) n = nft
         IF(ns.EQ.2) n = nc*nft
         m=n
 
         DO i = 1, n
-            x(i) = x0(i)
+            x(i) = x1(i)
         END DO
 
         mc = mcinit     ! Initial maximum number of stored corrections
@@ -148,9 +147,9 @@ CONTAINS
 
     !***********************************************************************
     !*                                                                     *
-    !*     * SUBROUTINE islmb *                                             *
+    !*     * SUBROUTINE islmb *                                            *
     !*                                                                     *
-    !*     Stochastic limited memory bundle subroutine for                 * 
+    !*     Stochastic inexact limited memory bundle subroutine for         * 
     !*     nonsmooth optimization.                                         *
     !*                                                                     *
     !***********************************************************************
@@ -172,12 +171,11 @@ CONTAINS
             na, &        ! Maximum bundle dimension, na >= 2.
             mcu, &       ! Upper limit for maximum number of stored corrections, mcu >= 3.
             inma, &      ! Selection of line search method:
-                         !   inma = 0, Armijo line search,
-                         !   inma = 1, nonmonotone Armijo line search.
-                         !   inma = 2, weak Wolfe line search.
+                         !   inma = 0, InexactLMBM with simple step size selection,
+                         !   inma = 1, InexactLMBM with nonmonotone step size selection,
             mnma, &      ! Maximum number of function values used in nonmonotone line search.
-            iprint, &    ! Printout specification (see initializat for more details).
-            iscale, &    ! Selection of the scaling (see initializat for more details).
+            iprint, &    ! Printout specification (see initisic for more details).
+            iscale, &    ! Selection of the scaling (see initisic for more details).
             tolf, &      ! Tolerance for change of function values.
             tolf2, &     ! Second tolerance for change of function values.
             tolb, &      ! Tolerance for the function value.
@@ -187,16 +185,14 @@ CONTAINS
             epsl, &      ! Line search parameter, 0 < epsl < 0.25.
             mtesf, &     ! Maximum number of iterations with changes of
                          ! function values smaller than tolf.
-            mit, &       ! Maximun number of iterations.
-            mfe          ! Maximun number of function evaluations.
+            mit, &       ! Maximum number of iterations.
+            mfe          ! Maximum number of function evaluations.
         USE initclust, ONLY : &
+            f_prev_nc, & ! Cluster function value with l=k-1.
             nrecord => nrec_used, & ! Number of used records in data.
-            f_prev_nc, & ! HIHU 22.5.2026 
             ns           ! Switch for auxiliary and cluster problems
         USE obj_fun, ONLY : &
-            myf, &       ! Computation of the value of the objective function.
-            myg, &       ! Computation of the subgradient of the objective function.
-            clustfull    ! Computation of full cluster function value (with partial data if nrecord /= nrec_used)
+            myfg         ! Combined computation of objective value and subgradient.
 
         USE subpro, ONLY : &
             xdiffy, &    ! Difference of two vectors.
@@ -236,20 +232,19 @@ CONTAINS
 
         ! Local Arrays
         REAL(KIND=prec), DIMENSION(n) :: &
-            xbest, &     ! Best solution obtained.
             xo, &        ! Previous vector of variables.
             g, &         ! Subgradient of the objective function.
-            gp, &        ! Previous subgradient of the ohjective function.
+            gp, &        ! Previous subgradient of the objective function.
             ga, &        ! Aggregate subgradient.
             s, &         ! Difference of current and previous variables.
             u, &         ! Difference of current and previous subgradients.
             d, &         ! Direction vector.
             tmpn1        ! Auxiliary array.
         REAL(KIND=prec), DIMENSION(n*(mcu+1)) :: &
-            sm,um        ! Matrises whose columns are stored differences of
+            sm,um        ! Matrices whose columns are stored differences of
                          ! variables (sm) and subgradients (um).
         REAL(KIND=prec), DIMENSION((mcu+2)*(mcu+1)/2) :: &
-            rm, &        ! pper triangular matrix stored columnwise in the
+            rm, &        ! Upper triangular matrix stored columnwise in the
                          ! one-dimensional array.
             umtum        ! Matrix whose columns are stored subgradient differences.
         REAL(KIND=prec), DIMENSION(mcu+1) :: &
@@ -299,13 +294,12 @@ CONTAINS
             iflag, &     ! Index for adaptive version.
             neps, &      ! Number of consecutive equal stopping criterions.
             ntesf, &     ! Number of tests on function decrease.
-            nconv, &     ! Number of tests on nonconvergence.
             ncres, &     ! Number of restarts.
             nres, &      ! Number of consecutive restarts.
             nress, &     ! Number of consecutive restarts in case of tmax < tmin.
-            nout         ! Auxilary printout specification.
+            nout         ! Auxiliary printout specification.
         real :: urand    ! Random number
-        integer :: j,itmp,ibatch,fcount,inth
+        integer :: j,itmp,ibatch,inth
 
         ! Intrinsic Functions
         INTRINSIC ABS,MAX,SQRT,DOT_PRODUCT
@@ -322,7 +316,6 @@ CONTAINS
             maxnrs  = 2000             ! Maximum number of restarts.
 
         ! Initialization   
-        nconv   = 0 
         ib      = 0     
         inth    = 0
         inewnma = 1
@@ -347,7 +340,6 @@ CONTAINS
         xnorm   = large
         fold    = -large
         fbest   = large
-        fcount  = 0
 
         epsr    = 0.25_prec+small
         IF (epsl+epsl >= epsr) THEN
@@ -370,15 +362,8 @@ CONTAINS
 
         ! Computation of the value and the subgradient of the objective
         ! function and the search direction for the first iteration
-        if (ns==2) then
-            call clustfull(x,fbest)
-            do i=1,n
-                xbest(i)=x(i)
-            end do
-        end if
-
-        CALL myf(n,x,f,iterm)
-        CALL myg(n,x,g,iterm)
+        
+        CALL myfg(n,x,f,g,iterm)
         nfe = nfe + 1
         nge = nge + 1
 
@@ -470,35 +455,14 @@ CONTAINS
                 END IF
 
 
-                IF (nfe >= mfe) THEN
+                IF (nfe > mfe) THEN
                     nout = mfe
-                    if (ns == 2) then
-                        call clustfull(x,f) ! HUOM! tämä pitää ottaa huomioon DP:ssä!!! tai sitten palauttaa vain nykyinen piste
-                        if (fbest > f) then
-                            fbest = f
-                            do i =1,n 
-                                xbest(i) = x(i)
-                            end do
-                        end if
-                    end if
-    
                     iterm = 4
                     EXIT batch ! Termination with nfe > mfe.
                 END IF
 
-      
-                IF (nit >= mit) THEN
+                IF (nit > mit) THEN
                     nout = mit
-                    if (ns == 2) then
-                        call clustfull(x,f) ! HUOM! tämä pitää ottaa huomioon DP:ssä!!! tai sitten palauttaa vain nykyinen piste
-                        if (fbest > f) then
-                            fbest = f
-                            do i =1,n 
-                                xbest(i) = x(i)
-                            end do
-                        end if
-                    end if
-    
                     iterm = 5
                     EXIT batch ! Termination with nit > mit.
                 END IF
@@ -580,7 +544,7 @@ CONTAINS
                     CALL copy2(n,x,xo,g,gp)
                 END IF
                 
-                ! New adaptive tmax 15.5.2026
+                ! Adaptive tmax
                 ! In DP version, we could use (noisy) function value here?
                 IF (dnorm > zero) tmax = MIN(1000.0_prec, 0.1_prec*SQRT(f_prev_nc / REAL(nrecord, prec))) / dnorm
 
@@ -636,20 +600,6 @@ CONTAINS
 
                 IF (iterm /= 0) EXIT batch 
        
-                ! HUOM! tämä tuskin laukeaa täällä, kun vaihdetaan batchia 10 välein.
-                IF (tolf2 >= 0) THEN
-                    IF (iters == 0 .AND. xnorm <= one .AND. (ABS(xnorm - pxnorm) <= tolf2)) then
-                        nconv = nconv+1
-                    ELSE
-                        nconv = 0
-                    END IF    
-                    IF (nconv > 50) THEN 
-!                        IF (nconv > 100) THEN 
-                            iterm = 3
-                        EXIT iteration
-                    END IF
-                END IF
-
                 IF (iters == 1) THEN
                     IF (ABS(fo-f) <= tolf*MAX(ABS(f),ABS(fo),one)) THEN 
                         ntesf = ntesf + 1
@@ -739,46 +689,11 @@ CONTAINS
             END DO iteration
                     
             if (ibatch==maxbatch) then
-                if (ns == 2) then
-                    
-                    call clustfull(x,f) ! HUOM! tämä pitää ottaa huomioon DP:ssä!!! tai sitten palauttaa vain nykyinen piste
-                    if (fbest > f) then
-                        fbest = f
-                        do i =1,n 
-                            xbest(i) = x(i)
-                        end do
-                    end if
-                end if
-
                 iterm = 9
                 exit batch
             end if
         
-            ! Stop if the function value has not improved within mtesf last batches
-            if (ns == 2) then 
-                call clustfull(x,f) ! HUOM! tämä pitää ottaa huomioon DP:ssä!!! tai sitten palauttaa vain nykyinen piste/ verrata nyk. batchin arvoja
-                if (fbest > f) then
-                    fcount = 0
-                    fbest = f
-                    do i =1,n 
-                        xbest(i) = x(i)
-                    end do
-                else
-                    fcount = fcount + 1
-                end if
-                if (fcount > mtesf) then
-                    print*,'fbest',fbest,f,fbest-f
-                    if (iters == 0) then ! if iters == 1 we have x=xbest
-                        do i =1,n
-                            x(i) = xbest(i)
-                        end do
-                    end if
-                    iterm = 8
-                    exit batch
-                end if   
-        
-            end if
-
+            
             ! if (iterm == 6) EXIT batch ! Time limit
             if (iterm == 7) PRINT*,' Something is wrong, iterm = 7, f=',f ! Note, this never happened in tests.
         
@@ -804,15 +719,14 @@ CONTAINS
 
             ncres  = -1 ! ncres is number of restarts in current batch
         
-            !if (iterm >= 10) then    
             if (iterm >= 0) then    
                 ! Everything is ok. Continue in next batch with saved information.
                 iterm = 0
                 iters  = 1
             
-                inewnma = 1 ! HIHU 11.5.2026
-                ibun    = 1 ! HIHU 12.5.2026
-                mal     = 0 ! HIHU 12.5.2026
+                inewnma = 1 
+                ibun    = 1 
+                mal     = 0 
                 nout   = 0
                 ntesf  = 0
                 nres   = 1
@@ -825,8 +739,7 @@ CONTAINS
                 alfn = zero
                 alfv = zero
 
-                CALL myf(n,x,f,iterm)
-                CALL myg(n,x,g,iterm)
+                CALL myfg(n,x,f,g,iterm)
                 nfe = nfe + 1
                 nge = nge + 1
     
@@ -841,7 +754,6 @@ CONTAINS
 
 
 
-            !else if (iterm>=0 .or. iterm == -1 .or. iterm == -2 .or. iterm == -4) then
             else if (iterm == -1 .or. iterm == -2 .or. iterm == -4) then
                 ! Failure in the current batch. Continue in next batch without old information.
                 iterm = 0
@@ -860,8 +772,7 @@ CONTAINS
 
             
 
-                CALL myf(n,x,f,iterm)
-                CALL myg(n,x,g,iterm)
+                CALL myfg(n,x,f,g,iterm)
                 nfe = nfe + 1 
                 nge = nge + 1
     
@@ -887,10 +798,6 @@ CONTAINS
     ! Printout the final results
     if (ns==2) then
         CALL wprint(iterm,iprint,nout)
-        f=fbest
-        do i=1,n
-            x(i)=xbest(i)
-        end do    
         CALL rprint(n,nit,nfe,nge,x,f,xnorm,half*gnorm+alfv,iterm,iprint)
         
     end if
@@ -1421,8 +1328,7 @@ SUBROUTINE select_new_point(n,x,g,d,xo,t,fo,f,p,alfn,dnorm,wk,theta,epsl,epsr,&
  
     USE param, ONLY : zero,half,one,two
     USE obj_fun, ONLY : &
-        myf,myg        ! Computation of the value and the subgradient of
-                    ! the objective function.
+        myfg           ! Combined computation of objective value and subgradient.
     USE subpro, ONLY : &
         scsum       ! Sum of a vector and the scaled vector.
  
@@ -1495,8 +1401,7 @@ SUBROUTINE select_new_point(n,x,g,d,xo,t,fo,f,p,alfn,dnorm,wk,theta,epsl,epsr,&
 ! Function and subgradient evaluation at a new point       
     CALL scsum(n,theta*t,d,xo,x)
  
-    CALL myf(n,x,f,iterm)
-    CALL myg(n,x,g,iterm)
+    CALL myfg(n,x,f,g,iterm)
     nfe = nfe + 1
     nge = nge + 1
     IF (iterm /= 0) RETURN
@@ -1550,8 +1455,7 @@ SUBROUTINE nm_select_new_point(n,x,g,d,xo,t,fo,f,fold,p,alfn,dnorm,wk,theta,epsl
  
     USE param, ONLY : zero,half,one,two
     USE obj_fun, ONLY : &
-        myf,myg        ! Computation of the value and the subgradient of
-                    ! the objective function.
+        myfg           ! Combined computation of objective value and subgradient.
     USE subpro, ONLY : &
         scsum       ! Sum of a vector and the scaled vector.
     USE initislmb, ONLY : &
@@ -1639,13 +1543,12 @@ SUBROUTINE nm_select_new_point(n,x,g,d,xo,t,fo,f,fold,p,alfn,dnorm,wk,theta,epsl
             fold(imax) = fo
         END IF
     END IF
-    ftmp = MAXVAL(fold)
+    ftmp = MAXVAL(fold(1:inewnma)) ! rajat 5.6.2026
   
 ! Function evaluation at a new point
     CALL scsum(n,theta*t,d,xo,x)
  
-    CALL myf(n,x,f,iterm)
-    CALL myg(n,x,g,iterm)
+    CALL myfg(n,x,f,g,iterm)
     nfe = nfe + 1
     nge = nge + 1
     IF (iterm /= 0) RETURN
@@ -3514,7 +3417,7 @@ SUBROUTINE wprint(iterm,iprint,nout)
                      !        objective function.
                      !   5  - At each iteration the whole
                      !        solution
-        nout, &      ! Auxilary printout specification.
+        nout, &      ! Auxiliary printout specification.
         iterm        ! Cause of termination:
                       !   1  - The problem has been solved with desired accuracy.
                       !   2  - Changes in function values < tolf in mtesf

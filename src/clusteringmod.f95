@@ -1,16 +1,16 @@
 !*************************************************************************
 !*                                                                       *
-!*     BigClust - Stochastic Nonsmooth Optimization based                *
-!*     Incremental Clustering Software (version 0.1)                     *
+!*     ISIC - Stochastic Nonsmooth Optimization based                    *
+!*     Incremental Clustering Software (bigClust version 2.0)            *
 !*                                                                       *
-!*     by Napsu Karmitsa 2024 (last modified 3.4.2024).                  *
+!*     Subroutines for clustering used within ISIC software.             *
 !*                                                                       *
-!*     Subroutines for clustering used within BigClust software.         *
+!*     Napsu Karmitsa 2026 (last modified 14.4.2026).                    *
 !*                                                                       *
-!*     The work was financially supported by the Research Council of     *
-!*     Finland (Project No. #345804 and #345805).                        *
+!*     This work was part of the PRIVIDEMA project funded by the         *
+!*     European Union under Grant Agreement No. 101167964.               *
 !*                                                                       *
-!*     BigClust software is covered by the MIT license.                  *
+!*     ISIC software is covered by the MIT license.                      *
 !*                                                                       *
 !*************************************************************************
 !*
@@ -27,7 +27,7 @@ MODULE clusteringmod       ! Subroutines for clustering software
     ! MODULE clusteringmod includes the following subroutines (S).
 
     PUBLIC :: &
-        check, &           ! S  Checking the results and and calculation of
+        check, &           ! S  Checking the results and calculation of
                            !    validity indices.
         step1, &           ! S  Computation of the centroid and the value of
                            !    clustering function at centroid.
@@ -36,7 +36,7 @@ MODULE clusteringmod       ! Subroutines for clustering software
 CONTAINS
 
     !============================================================================
-    !    subroutine check summarizes the results, selects data points as initial
+    !    Subroutine check summarizes the results, selects data points as initial
     !    cluster centers, and calculates cluster validity indices.
     !============================================================================
     SUBROUTINE check(x,f,db,db2,dn,dn3,sep)
@@ -50,7 +50,7 @@ CONTAINS
             tnorm, &          ! The total number of norms computed.
             m1, &             ! Maximum number of initial solutions.
             nel, &            ! nel(nclust), nel(i)=number of records in cluster i
-            nk, &             ! nk(nclust,nrecord), nk(i,j) (j=1,...,nel(i)) tells which data 
+            nk, &             ! nk(nrecord,nclust), nk(j,i) (j=1,...,nel(i)) tells which data 
                               !   points are in cluster i
             ncand, &          ! Number of canditate points.
             lcand, &          ! lcand(nrecord), lcand(i) 
@@ -65,7 +65,7 @@ CONTAINS
             x                     ! Cluster centers
         REAL(KIND=prec), INTENT(OUT) ::      &
             f, &                  ! Value of the clustering function 
-            db,db2,dn,dn3,sep     ! Davies Boulding, Dunn, and separation indices
+            db,db2,dn,dn3,sep     ! Davies-Boulding, Dunn, and separation indices
 
         ! Local variables
         REAL(KIND=prec) ::      &
@@ -79,7 +79,7 @@ CONTAINS
             fk(nc),             &
             rad(nc),            & ! Average distance of data points in cluster i to its centroid.
             radmax(nc),         & ! Maximum distance of data points in cluster i to its centroid.
-            trdist, &
+            trdist,             & ! 
             r1,r2,r3,r4,r5
 
         ! Local integer variables
@@ -90,8 +90,8 @@ CONTAINS
             ncand1, &
             n1
 
-!        trdist = 4.0_prec ! HIHU 25.5.2026
-        trdist = MAX(4.0_prec, LOG(REAL(nft,prec))) 
+        trdist = 4.0_prec
+        !trdist = MAX(4.0_prec, LOG(REAL(nft,prec))) 
         
         nel = 0
         DO j=1,nc
@@ -126,7 +126,7 @@ CONTAINS
             dminim(k)=f2
             f=f+f2
             nel(jmin)=nel(jmin)+1
-            nk(jmin,nel(jmin))=k
+            nk(nel(jmin),jmin)=k
             list1(k)=jmin
             rad(jmin)=rad(jmin)+f2
             radmax(jmin)=MAX(radmax(jmin),f2)
@@ -149,9 +149,8 @@ CONTAINS
         !=========================================================================
         ncand=0
         loop1: DO k=1,nc ! Step 1 in Finding set of starting points algorithm, returns set A_1.
-            IF(nel(k) == 1) CYCLE loop1 ! If only one point in the cluster it is already the cetroid
-            IF(radmax(k) <= 1.0E-1_prec*f/nrecord) CYCLE loop1 ! HIHU 25.5.2026 If radmax is small the point is the centroid
-!            IF(radmax(k) <= 1.0E-6_prec) CYCLE loop1 ! If radmax is small the point is the centroid
+            IF(nel(k) == 1) CYCLE loop1 ! If only one point in the cluster it is already the centroid
+            IF(radmax(k) <= 1.0E-1_prec*f/nrecord) CYCLE loop1 ! If radmax is small the point is the centroid
             n1=MAX(1,nel(k)*m1/nrecord) ! Max number of data points selected from cluster k.
             ncand1=0
             r1=radmax(k)
@@ -165,7 +164,7 @@ CONTAINS
                 r4=r3-r5
                 IF(r3 < r2) CYCLE loop1 ! Only loop points whose distance is above the average
                 DO j=1,nel(k)
-                    i=nk(k,j)           ! Check data points that are in cluster k
+                    i=nk(j,k)           ! Check data points that are in cluster k
                     IF((dminim(i) <= r3).and.(dminim(i) >= r4)) THEN ! Add the furthest points as canditate solutions
                         ncand=ncand+1
                         ncand1=ncand1+1
@@ -199,7 +198,7 @@ CONTAINS
         ! Calculation of Davies-Bouldin (DB) validity index
         ! (last changed 25 August 2017)
         ! db is the index using Euclidean distances while
-        ! db2 uses squared Euglidean distances
+        ! db2 uses squared Euclidean distances
         !=====================================================
 
         DO i=1,nc
@@ -267,7 +266,7 @@ CONTAINS
         !            m2=nel(i)
         !            m3=0
         !            loop_sep: do j=1,m2
-        !                k=nk(i,j)
+        !                k=nk(j,i)
         !                do k1=1,nc
         !                    if(k1.ne.i) then
         !                        d1=zero
@@ -293,8 +292,8 @@ CONTAINS
 
 
     !===============================================================================
-    !  Subroutine step1 computes the centroid and the value of clustering function at centroid
-    !  using whole data (i.e. not minibatch, Step 0 in SLMB-Clust algorithm)
+    !  Subroutine step1 computes the centroid and the value of clustering function at 
+    !  centroid using sample of data (but not minibatch, Step 0 in ISIC algorithm)
     !===============================================================================
     SUBROUTINE step1(f,x)
 
@@ -343,11 +342,11 @@ CONTAINS
 
 
     !=========================================================================
-    !  Subroutine step2 computes clusters for each data point
+    !  Subroutine step2: Select the best candidate solution
     !=========================================================================
-    SUBROUTINE step2(toler,nstart,x2)
+    SUBROUTINE step2(x2)
 
-        USE param, ONLY : zero, one, two
+        USE param, ONLY : zero, one, large
         USE initclust, ONLY : &
             a => a_used, & ! Data matrix
             nft, &         ! Number of features
@@ -355,7 +354,6 @@ CONTAINS
             dminim, &      ! dminim(nrecord), the distance of a(i) and the nearest centroid.
             ncand, &       ! Number of canditate points.
             lcand, &       ! Data points which are selected as initial cluster centers.
-            ng1, &         ! Threshold parameter, ng1 <= 100
             l4, &          ! Auxiliary array
             tnorm          ! The total number of norms computed.
 
@@ -363,156 +361,97 @@ CONTAINS
 
         ! Subroutine arguments
         REAL(KIND=prec), DIMENSION(:), INTENT(INOUT) ::  &
-            x2             ! Initial cluster centers
-        REAL(KIND=prec), INTENT(IN) ::  &
-            toler          ! Tolerance for accepting an initial cluster center
-        INTEGER, INTENT(OUT) ::  &
-            nstart         ! Number of the initial centers.
+            x2             ! Initial cluster centers (x2(1:nft) = center of best candidate)
 
         ! Local variables
         REAL(KIND=prec) ::  &
-            dcand(ncand,ncand), &
-            d1,d3,d4,d21,   &
-            fmin,fmin2,     &
-            fmin1(ncand),   &
-            f2,             &
-            fmin0,          &
-            gamma0,         &
-            toler2,         &
+            d1,d3,d21,  &
+            fmin,       &
+            f2,         &
             trdist
 
-        INTEGER ::           &
-            ncand1,          &
-            nclose,          &
-            nstart0,         &
-            lcand1(ncand),   &
-            icand,           &
-            i1,              &
-            i,j,             &
-            j1,j2,           &
+        INTEGER ::  &
+            ibest,  &
+            nclose, &
+            i1,     &
+            i,j,    &
             k,l
 
-        INTRINSIC :: MIN      ! mimimum
+        INTRINSIC :: MIN
 
-        trdist = 4.0_prec 
-        fmin=zero
-        !print*,'Number of candidate points: ',ncand
+        trdist = MAX(4.0_prec, LOG(REAL(nft,prec))) 
 
-        DO i1=1,ncand
-            i=lcand(i1)
-            f2=dminim(i) 
-            d21=zero
-            loop1: DO l=1,nrecord 
-                IF (f2 < (trdist * dminim(l))) THEN
-                    d3=zero
-                    DO k=1,nft
-                        d3 = d3+(a(k,i)-a(k,l))**2
-                    END DO
-                    tnorm=tnorm+one
-                    d21=d21+MIN(zero,d3-dminim(l)) 
+        IF (ncand == 0) THEN 
+            i = 1
+            f2 = dminim(1)
+            DO j = 2, nrecord
+                IF (dminim(j) > f2) THEN
+                    f2 = dminim(j)
+                    i = j
                 END IF
-            END DO loop1
-            fmin1(i1)=d21
-            fmin = MIN(fmin,d21)
-            
-        END DO
-        
-        nstart0=max(1,ng1*ncand/100)
-        nstart=0
-        ncand1 = 0
-        gamma0 = 1.01_prec
+            END DO
+            ncand = 1
+            lcand(1) = i
+        END IF
 
-        ! Select the most promising canditate points among data points
-        loop2: DO WHILE (ncand1 < nstart0)
-            gamma0 = gamma0 - 1.0E-02_prec
-            fmin0 = gamma0*fmin
-            fmin2 = (gamma0 - 1.0E-02_prec)*fmin
+        IF (ncand > 1) THEN
+            fmin   = large
+            ibest  = 1
+
+            ! Find the candidate with the greatest improvement potential (argmin of d21).
             DO i1=1,ncand
-                i=lcand(i1)
-                IF ((fmin1(i1) >= fmin0).AND.(fmin1(i1) <= fmin2)) THEN
-                    ncand1=ncand1+1
-                    lcand1(ncand1)=i
-                    IF(ncand1>=nstart0) EXIT loop2
-                END IF
-            END DO
-        END DO loop2
-        
-        ! Update canditate points (set A_1)
-        ncand = ncand1
-        DO i1=1,ncand
-            lcand(i1)=lcand1(i1)
-        END DO
-        
-        ! Compute new centers for canditate solutions (set B(a) and its center)
-        icand=0
-        DO i1=1,ncand
-            i=lcand(i1)
-            nclose=0 
-            DO j=1,nrecord
-                IF(dminim(i)<(trdist*dminim(j))) THEN
-                    d1=zero
-                    DO k=1,nft
-                        d1=d1+(a(k,i)-a(k,j))**2
-                    END DO
-                    tnorm=tnorm+one
-                    IF(d1 < dminim(j)) THEN
-                        nclose=nclose+1
-                        l4(nclose)=j
+                i   = lcand(i1)
+                f2  = dminim(i)
+                d21 = zero
+                loop1: DO l=1,nrecord
+                    IF (f2 < (trdist * dminim(l))) THEN
+                        d3 = zero
+                        DO k=1,nft
+                            d3 = d3 + (a(k,i)-a(k,l))**2
+                        END DO
+                        tnorm = tnorm + one
+                        d21   = d21 + MIN(zero, d3-dminim(l))
                     END IF
+                END DO loop1
+                IF (d21 < fmin) THEN
+                    fmin  = d21
+                    ibest = i1
                 END IF
             END DO
-            ! Compute new centers
-            IF(nclose>0) THEN
+        ELSE
+            ibest = 1
+        END IF
+
+        ! Compute the centroid of the ball B(a) around the best candidate.
+        i      = lcand(ibest)
+        nclose = 0
+        DO j=1,nrecord
+            IF (dminim(i) < (trdist*dminim(j))) THEN
+                d1 = zero
                 DO k=1,nft
-                    d3=zero
-                    DO j=1,nclose
-                        j1=l4(j)
-                        d3=d3+a(k,j1)
-                    END DO
-                    x2(k+(i1-1)*nft) = d3/REAL(nclose,prec)
+                    d1 = d1 + (a(k,i)-a(k,j))**2
                 END DO
+                tnorm = tnorm + one
+                IF (d1 < dminim(j)) THEN
+                    nclose     = nclose + 1
+                    l4(nclose) = j
+                END IF
             END IF
         END DO
-        
-
-        DO i=1,ncand
-            dcand(i,i)=zero
-        END DO
-
-        DO i=1,ncand
-            DO j=i+1,ncand
-                dcand(i,j)=zero
-                DO k=1,nft
-                    dcand(i,j)=dcand(i,j)+(x2(k+(i-1)*nft)-x2(k+(j-1)*nft))**2
-                END DO
-                dcand(j,i)=dcand(i,j)
-            END DO
-        END DO
-        
-        ! Select the most promising canditate solutions (set A_3)    
-        !toler2=0.1_prec*toler 
-        toler2 = toler ! 8.5.2026
-        !toler2 = 0.1_prec * toler / REAL(nrec_used, prec) ! Claude ehdottaa tätä
-        ! toisaalta voi myös kokeilla ihan tolerin korjaamista isic.f95 l381
-        !toler = 1.0E-04_prec * fclust1 / (REAL(nc, prec) * REAL(nrec_used, prec))
-        ! ja täällä käyttää myös tuota toleria tai jotain vähän isompaa
-        ! Ehkä voi myös vähän miettiä tuota kerrointa 10^-4
-        nstart=0
-        loop_ncand: DO j=1,ncand
-            DO j1=1,nstart
-                j2 = l4(j1)
-                d4 = dcand(j,j2)
-                !print*,'toler2 ',d4, toler2, d4-toler2,j,ncand,nstart
-                !IF(d4 >= toler2) CYCLE loop_ncand !
-                IF(d4 < toler2) CYCLE loop_ncand ! changed 4.2.2026 ja tätä
-            END DO
-            nstart=nstart+1
-            l4(nstart)=j
+        IF (nclose > 0) THEN
             DO k=1,nft
-                x2(k+(nstart-1)*nft)=x2(k+(j-1)*nft)
+                d3 = zero
+                DO j=1,nclose
+                    d3 = d3 + a(k, l4(j))
+                END DO
+                x2(k) = d3 / REAL(nclose, prec)
             END DO
-        END DO loop_ncand
-        !print*,'nstart ',nstart
+        ELSE 
+            DO k = 1, nft
+                x2(k) = a(k, i)
+            END DO
+        END IF
+
         RETURN
 
     END SUBROUTINE step2
