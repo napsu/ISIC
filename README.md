@@ -7,7 +7,7 @@ Due to its incremental structure, __ISIC__ obtains solutions not only to the _k_
 __ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigClust) in two main respects. First, it uses iSLMB, a stochastic variant of [__InexactLMBM__](https://github.com/napsu/InexactLMBM), as its optimization engine. This allows the optimization method to better account for the inexactness introduced by stochastic computations. Second, __ISIC__ employs a _greedy starting-point selection procedure_ that avoids the costly computations required by the original starting-point strategy.
 
 ## Files included
-* isic.f95          
+* 'isic.f95'          
   - Mainprogram for clustering software.
 * initisic.f95  
   - Initialization of clustering parameters and InexactLMBM. Includes modules:
