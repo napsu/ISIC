@@ -1,17 +1,18 @@
-# ISIC - Incremental Stochastic InexactLMB Clustering Software (bigClust 2.0) 
+# ISIC - Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization (bigClust 2.0)
 
-__ISIC__ is a nonsmooth optimization-based clustering algorithm for solving the minimum sum-of-squares clustering (MSSC) problem on very large-scale and big datasets. __ISIC__ consists of two components: an incremental algorithm designed to produce high-quality, near-global solutions to the clustering problem, and the stochastic inexact limited-memory bundle method (iSLMB), which is used at each iteration of the incremental algorithm to solve both the clustering and auxiliary clustering problems from different starting points.
+__ISIC__ is a nonsmooth optimization-based clustering algorithm for solving the minimum sum-of-squares clustering (MSSC) problem on very large-scale and big datasets. __ISIC__ consists of two components: an incremental algorithm designed to produce high-quality, near-global solutions to the clustering problem, and the _stochastic inexact limited-memory bundle method_ (iSLMB), which is used at each iteration of the incremental algorithm to solve both the clustering and auxiliary clustering problems from different starting points.
+
 Due to its incremental structure, __ISIC__ obtains solutions not only to the _k_-partition problem but also to all intermediate _l_-partition problems where _l_=1,…,_k_-1.
 
-__ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigClust) in two main respects. First, it uses the stochastic version of [__InexactLMBM__](https://github.com/napsu/InexactLMBM) as its optimization engine, allowing it to better account for the inexactness introduced by stochastic computations. Second, it employs a _greedy starting-point selection procedure_ that avoids the costly computations required by the original starting-point strategy.
+__ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigClust) in two main respects. First, it uses iSLMB, a stochastic variant of [__InexactLMBM__](https://github.com/napsu/InexactLMBM), as its optimization engine. This allows the optimization method to better account for the inexactness introduced by stochastic computations. Second, __ISIC__ employs a _greedy starting-point selection procedure_ that avoids the costly computations required by the original starting-point strategy.
 
 ## Files included
 * isic.f95          
-  - Mainprogram for clustering software
+  - Mainprogram for clustering software.
 * initisic.f95  
   - Initialization of clustering parameters and InexactLMBM. Includes modules:
     + initclust - Initialization of parameters for clustering.
-    + initislmb - Initialization of stochastic InexactLMB.
+    + initislmb - Initialization of iSLMB.
 * clusteringmod.f95     
   - Subroutines for clustering software.
 * islmb.f95              
@@ -34,17 +35,18 @@ __ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigCl
 
 To use the code:
 
-1) Modify initisic.f95 as needed. The least, select the dataset, give the number of data points, features, and the maximum number of clusters "_nclust_".
+1) Modify initisic.f95 as needed. At minimum, select the dataset and specify the number of data points, the number of features, and the maximum number of clusters, "_nclust_".
 2) Run Makefile (by typing "make"). Makefile uses gfortran as default.
-3) Finally, just type "./isic".
+3) Finally, run __ISIC__ by typing "./isic".
 
+The algorithm returns a text file containing the clustering function values, Dunn and Davies-Bouldin validity indices, and elapsed CPU times for solutions with up to _nclust_ clusters.
 
-The algorithm returns a txt-file with clustering function values, Dunn and Davies-Bouldin validity indices and elapsed CPU-times up to _nclust_ clusters.
-In addition, separate txt-file with the final cluster centers with _nclust_ clusters and the solutions to all intermediate _l_-clustering problems with _l_ = 1,...,_nclust_-1 is returned.
+In addition, it returns a separate text file containing the final cluster centers for the _nclust_-partition problem, as well as the solutions to all intermediate _l_-partition problems, where
+ _l_ = 1,...,_nclust_-1.
 
 ## References:
 * ISIC and iSLMB:
-  - N. Karmitsa, J. Lampainen, K. Joki, M.M. Mäkelä, "ISIC - Stochastic Nonsmooth Optimization based Incremental Clustering Software", 2026.
+  - N. Karmitsa, J. Lampainen, K. Joki, M.M. Mäkelä, "Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization", 2026.
 
 * BigClust and SLMBA:
   - N. Karmitsa, V.-P. Eronen, M.M. Mäkelä, T. Pahikkala, A. Airola, "[Stochastic limited memory bundle algorithm for clustering in big data](https://www.sciencedirect.com/science/article/pii/S0031320325003140?via%3Dihub)", _Pattern Recognition_, Vol. 165,  111654, 2025.
@@ -63,8 +65,7 @@ In addition, separate txt-file with the final cluster centers with _nclust_ clus
   - A. Bagirov, N. Karmitsa, M.M. Mäkelä, "[Introduction to nonsmooth optimization: theory, practice and software](https://link.springer.com/book/10.1007/978-3-319-08114-4)", _Springer_, 2014.
 
 ## Acknowledgements
-This work was part of the    
- [PRIVIDEMA](https://prividema.eu/) project (Privacy Preserving Identity Management for
+This work was part of the [PRIVIDEMA](https://prividema.eu/) project (Privacy Preserving Identity Management for
 Digital Wallet and Secure Data Sharing and Processing for Cyber Threat
 Intelligence Data) funded by the European Union under Grant Agreement No. 101167964.
 Views and opinions expressed are, however, those of the author(s) only and do
