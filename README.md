@@ -9,42 +9,42 @@ __ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigCl
 ## Files included
 * `isic.f95`          
   - Mainprogram for clustering software.
-* initisic.f95  
+* `initisic.f95`  
   - Initialization of clustering parameters and InexactLMBM. Includes modules:
-    + initclust - Initialization of parameters for clustering.
-    + initislmb - Initialization of iSLMB.
-* clusteringmod.f95     
+    + `initclust` - Initialization of parameters for clustering.
+    + `initislmb` - Initialization of iSLMB.
+* `clusteringmod.f95`     
   - Subroutines for clustering software.
-* islmb.f95              
+* `islmb.f95`              
   - iSLMB - Stochastic inexact limited memory bundle method.
-* objfun.f95            
+* `objfun.f95`            
   - Computation of the cluster function and subgradients values.
-* subpro.f95            
+* `subpro.f95`            
   - Subprograms for iSLMB.
-* parameters.f95        
+* `parameters.f95`        
   - Parameters. Inludes modules:
-    + r_precision - Precision for reals,
-    + param - Parameters,
-    + exe_time - Execution time.
+    + `r_precision` - Precision for reals,
+    + `param` - Parameters,
+    + `exe_time` - Execution time.
 
 * Makefile              
-  - makefile: requires a Fortran compiler (gfortran) to be installed.
+  - `Makefile`: requires a Fortran compiler (gfortran) to be installed.
 
 * Auxiliary Python scripts
-  - run_all_datasets.py
+  - `run_all_datasets.py`
     + Runs __ISIC__ automatically for all datasets.
-  - run_all_seeds.py
+  - `run_all_seeds.py`
     + Runs all datasets with multiple random seeds and summarizes the results.
-  - run_all_seeds_subsample.py
-    + As "run_all_seeds.py", but preserves the subsampling definition in initisic.f95.
+  - `run_all_seeds_subsample.py`
+    + As `run_all_seeds.py`, but preserves the subsampling definition in `initisic.f95`.
 
 ## Installation and usage
 
 To use the code:
 
-1) Modify initisic.f95 as needed. At minimum, select the dataset and specify the number of data points, the number of features, and the maximum number of clusters, "_nclust_".
-2) Run Makefile (by typing "make"). Makefile uses gfortran as default.
-3) Finally, run __ISIC__ by typing "./isic".
+1) Modify `initisic.f95` as needed. At minimum, select the dataset and specify the number of data points, the number of features, and the maximum number of clusters, "_nclust_".
+2) Run `Makefile` by typing `make`. The `Makefile` uses `gfortran` as default.
+3) Finally, run __ISIC__ by typing `./isic`.
 
 The algorithm returns a text file containing the clustering function values, Dunn and Davies-Bouldin validity indices, and elapsed CPU times for solutions with up to _nclust_ clusters.
 
