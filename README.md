@@ -30,7 +30,14 @@ __ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigCl
 * Makefile              
   - makefile: requires a Fortran compiler (gfortran) to be installed.
 
-
+* Auxiliary Python scripts
+  - run_all_datasets.py
+    + Runs ISIC automatically for all datasets.
+  - run_all_seeds.py
+    + Runs all datasets with multiple random seeds and summarizes the results.
+  - run_all_seeds_subsample.py
+    + As "run_all_seeds.py", but preserves the subsampling definition in initisic.f95.
+    
 ## Installation and usage
 
 To use the code:
@@ -43,6 +50,8 @@ The algorithm returns a text file containing the clustering function values, Dun
 
 In addition, it returns a separate text file containing the final cluster centers for the _nclust_-partition problem, as well as the solutions to all intermediate _l_-partition problems, where
  _l_ = 1,...,_nclust_-1.
+
+ For batch experiments, the auxiliary Python scripts can be used to run ISIC automatically over all datasets, multiple random seeds, or subsampled datasets. See the comments at the beginning of each script for usage details.
 
 ## References:
 * ISIC and iSLMB:
