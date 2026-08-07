@@ -1,17 +1,17 @@
-# ISIC - Stochastic Nonsmooth Optimization based Incremental Clustering Software (bigClust 2.0) 
+# ISIC - Incremental Stochastic InexactLMB Clustering Software (bigClust 2.0) 
 
 __ISIC__ is a nonsmooth optimization-based clustering algorithm for solving the minimum sum-of-squares clustering (MSSC) problem on very large-scale and big datasets. __ISIC__ consists of two components: an incremental algorithm designed to produce high-quality, near-global solutions to the clustering problem, and the stochastic inexact limited-memory bundle method (iSLMB), which is used at each iteration of the incremental algorithm to solve both the clustering and auxiliary clustering problems from different starting points.
 Due to its incremental structure, __ISIC__ obtains solutions not only to the _k_-partition problem but also to all intermediate _l_-partition problems where _l_=1,…,_k_-1.
 
-__ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigClust) in two main respects. First, it uses the stochastic version of [__inexactLMBM__](https://github.com/napsu/InexactLMBM) as its optimization engine, allowing it to better account for the inexactness introduced by stochastic computations. Second, it employs a _greedy starting-point selection procedure_ that avoids the costly computations required by the original starting-point strategy.
+__ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigClust) in two main respects. First, it uses the stochastic version of [__InexactLMBM__](https://github.com/napsu/InexactLMBM) as its optimization engine, allowing it to better account for the inexactness introduced by stochastic computations. Second, it employs a _greedy starting-point selection procedure_ that avoids the costly computations required by the original starting-point strategy.
 
 ## Files included
 * isic.f95          
   - Mainprogram for clustering software
 * initisic.f95  
-  - Initialization of clustering parameters and inexactLMBM. Includes modules:
+  - Initialization of clustering parameters and InexactLMBM. Includes modules:
     + initclust - Initialization of parameters for clustering.
-    + initislmb - Initialization of inexact SLMB.
+    + initislmb - Initialization of stochastic InexactLMB.
 * clusteringmod.f95     
   - Subroutines for clustering software.
 * islmb.f95              
@@ -52,7 +52,7 @@ In addition, separate txt-file with the final cluster centers with _nclust_ clus
 * Clustering:
   - A. Bagirov, N. Karmitsa, S Taheri, "[Partitional Clustering via Nonsmooth Optimization](https://link.springer.com/book/10.1007/978-3-030-37826-4)", _Springer_, 2020.
 
-* inexactLMBM:
+* InexactLMBM:
   - J. Lampainen, K. Joki, N. Karmitsa, M.M. Mäkelä, "[Inexact limited memory bundle method](https://arxiv.org/abs/2604.08067)", 2026. 
 
 * LMBM:
