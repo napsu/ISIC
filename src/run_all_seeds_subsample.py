@@ -35,7 +35,7 @@ SEEDS = ALL_SEEDS[:NROSEEDS]
 SRC_DIR = Path(__file__).parent.resolve()
 INIT_FILE = SRC_DIR / "initisic.f95"
 BACKUP_FILE = SRC_DIR / "initisic_backup_seeds_subsample.f95"
-SUMMARY_OUT = SRC_DIR / "isic_all_seeds_summary_subsample_10_10000.txt"
+SUMMARY_OUT = SRC_DIR / "isic_all_seeds_summary_subsample.txt"
 
 DATA_BASE = "../../../data/data_for_clustering/large_data_for_clustering"
 

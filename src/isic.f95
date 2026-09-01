@@ -42,6 +42,10 @@
 !*
 !*     References:
 !*
+!*     for ISIC:
+!*       N. Karmitsa, J. Lampainen, K. Joki, M.M. Mäkelä, "ISIC — Incremental Clustering Software 
+!*       Based on Stochastic Inexact Nonsmooth Optimization", 2026
+!*
 !*     for BigClust:
 !*       N. Karmitsa, V.-P. Eronen, M.M. Mäkelä, A. Airola, T. Pahikkala, "Stochastic limited 
 !*       memory bundle method for clustering in big data", Pattern Recognition, Vol. 165, 111654, 2025.

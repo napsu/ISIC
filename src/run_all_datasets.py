@@ -1,7 +1,7 @@
 """
 run_all_datasets.py
 
-Loops over all iSIC datasets, patches initisic.f95 for each,
+Loops over all ISIC datasets, patches initisic.f95 for each,
 recompiles, runs isic, and appends each summary to one combined file.
 
 Usage:
@@ -22,7 +22,7 @@ from pathlib import Path
 SRC_DIR = Path(__file__).parent.resolve()
 INIT_FILE = SRC_DIR / "initisic.f95"
 BACKUP_FILE = SRC_DIR / "initisic_backup.f95"
-COMBINED_OUT = SRC_DIR / "isic_all_results_testi.txt"
+COMBINED_OUT = SRC_DIR / "isic_all_results.txt"
 
 DATA_BASE = "../../../data/data_for_clustering/large_data_for_clustering"
 
@@ -138,7 +138,7 @@ def main():
     shutil.copy2(INIT_FILE, BACKUP_FILE)
 
     with COMBINED_OUT.open("w") as combined:
-        combined.write("iSIC — results for all datasets\n")
+        combined.write("ISIC — results for all datasets\n")
         combined.write("=" * 70 + "\n\n")
 
         for ds in DATASETS:

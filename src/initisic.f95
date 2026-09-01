@@ -1,18 +1,18 @@
 !*************************************************************************
 !*                                                                       *
-!*     iSIC - Stochastic Nonsmooth Optimization based                    *
+!*     ISIC - Stochastic Nonsmooth Optimization based                    *
 !*     Incremental Clustering Software (bigClust version 2.0)            *
 !*                                                                       *
-!*     iSIC differs from original bigClust by using                      *
+!*     ISIC differs from original bigClust by using                      *
 !*     stochastic inexactLMBM as an optimization engine and              *
-!*     greedy starting point selection procedure.                         * 
+!*     greedy starting point selection procedure.                        * 
 !*                                                                       *
 !*     Napsu Karmitsa 2026 (last modified 16.6.2026).                    *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
 !*                                                                       *
-!*     iSIC software is covered by the MIT license.                      *
+!*     ISIC software is covered by the MIT license.                      *
 !*                                                                       *
 !*************************************************************************
 !*
@@ -31,70 +31,17 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
 
     ! Names of input and output files:
     CHARACTER(LEN=80), SAVE :: &
-        !
-        infile = '../../../data/data_for_clustering/large_data_for_clustering/census.txt',&               ! 1 ok mahdollisesti x 2
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/EEG_Eye_State2.txt',&       ! 2 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/d15112.txt',&           ! 3 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/KEGG2.txt',&     ! 4
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/shuttle.txt',&             ! 5 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/pla85900.txt',&            ! 6 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/Skin_NonSkin.txt',&         ! 7 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/3D.txt',&! 8 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/Sensorless.txt',&              ! 9 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/isolet.txt',&      ! 11 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/OnlineNews.txt',&      ! 12 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/MiniBooNE_PID.txt',&      ! 13 ok
-        !infile = '../../../data/data_for_clustering/large_data_for_clustering/gisette.txt',&      ! 14 ! ok
-    !infile = '../data/Skin_NonSkin.txt',&   ! Input data 
-        outfile0 = 'isic_centers.txt', &         ! Result file with cluster centers.
-        outfile1 = 'isic_results_current.txt'              ! Result file with function values,
-        !outfile1 = 'isic_results_eeg_test.txt'           ! Result file with function values,
-        !outfile1 = 'isic_results_d15112.txt'             ! Result file with function values,
-        !outfile1 = 'isic_results_Kegg.txt'               ! Result file with function values,
-        !outfile1 = 'isic_results_shuttle.txt'            ! Result file with function values,
-        !outfile1 = 'isic_results_pla.txt'                ! Result file with function values,
-        !outfile1 = 'isic_results_skin.txt'               ! Result file with function values,
-        !outfile1 = 'isic_results_3d.txt'                 ! Result file with function values,
-        !outfile1 = 'isic_results_sensorless.txt'         ! Result file with function values,
-        !outfile1 = 'isic_results_isolet.txt'             ! Result file with function values,
-        !outfile1 = 'isic_results_news.txt'               ! Result file with function values,
-        !outfile1 = 'isic_results_miniboone.txt'          ! Result file with function values,
-        !outfile1 = 'isic_results_gisette.txt'              ! Result file with function values,
-                                                ! Davies-Bouldin (DB) validity index,
-                                                ! and cpu-time.
+        infile = '../data/Skin_NonSkin.txt',&     ! Input data 
+        outfile0 = 'isic_centers.txt', &          ! Result file with cluster centers.
+        outfile1 = 'isic_results.txt'             ! Result file with function values,
+                                                  ! Davies-Bouldin (DB) validity index,
+                                                  ! and cpu-time.
         
     ! Input integer parameters. Give values here.
     INTEGER, PARAMETER :: &
         nclust = 25, &          ! Maximum number of clusters, from user.
-        nft  = 68, &            ! Number of features in data, from user. 1
-        nrecord = 2458285, &    ! Number of records in data, from user. 1
-        !nft  = 14, &           ! 2
-        !nrecord = 14980, &     ! 2
-        !nft = 2, &             ! 3
-        !nrecord = 15112, &     ! 3
-        !nft = 20, &            ! 4
-        !nrecord = 53413, &     ! 4
-        !nft = 9, &             ! 5
-        !nrecord = 58000, &     ! 5
-        !nft = 2, &             ! 6
-        !nrecord = 85900, &     ! 6
-        !nft = 3, &             ! 7
-        !nrecord = 245057, &    ! 7
-        !nft = 3, &             ! 8
-        !nrecord = 434874, &    ! 8
-        !nft = 49-1, &            ! 9
-        !nrecord = 58509, &     ! 9
-        !nft = 617, &            ! 11
-        !nrecord = 7797, &       ! 11
-        !nft = 58, &            ! 12
-        !nrecord = 39644, &      !12
-        !nft = 50, &               !13
-        !nrecord = 130064, &      !13
-        !nft = 5000, &               !14
-        !nrecord = 13500, &      !14
-        
-        !nft = 3, &                  ! Number of features in data, from user. Skin
-        !nrecord = 245057, &         ! Number of records in data, from user. Skin
+        nft = 3, &                  ! Number of features in data, from user.
+        nrecord = 245057, &         ! Number of records in data, from user.
         !
         nrec_used = nrecord, &      ! Number of data points used at once in computations, nrec_used <= nrecord.
                                     !   E.g. nrec_used = nrecord if nrecord < 100000, nrec_used = MAX(nrecord/50,10000), otherwise.        
@@ -178,7 +125,7 @@ MODULE initislmb  ! Initialization of parameters for inexact SLMB.
     ! Parameters
     INTEGER, PARAMETER :: &
         na      = 10, &            ! Maximum bundle dimension, na >= 2. HIHU, onko tämä järkevä stokastisessa?
-        mcu     = 7, &            ! Maximum number of stored corrections, mcu >=1.
+        mcu     = 7, &             ! Maximum number of stored corrections, mcu >=1.
         mcinit  = 7, &             ! Initial maximum number of stored corrections, mcu >= mcinit >= 3.
                                    ! If mcinit <= 0, the default value mcinit = 3 will be used.
                                    ! However, the value mcinit = 7 is recommented.
