@@ -6,3 +6,5 @@
 ReadMe.txt
 data/*
 !data/.gitkeep
+src/isic
+src/initisic_backup.f95

@@ -1,9 +1,9 @@
 !*************************************************************************
 !*                                                                       *
-!*     iSIC - Stochastic Nonsmooth Optimization based                    *
+!*     ISIC - Stochastic Nonsmooth Optimization based                    *
 !*     Incremental Clustering Software (bigClust version 2.0)            *
 !*                                                                       *
-!*     iSIC differs from original bigClust by using                      *
+!*     ISIC differs from original bigClust by using                      *
 !*     stochastic inexactLMBM as an optimization engine and              *
 !*     greedy starting point selection procedure.                         * 
 !*                                                                       *
@@ -12,7 +12,7 @@
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
 !*                                                                       *
-!*     iSIC software is covered by the MIT license.                      *
+!*     ISIC software is covered by the MIT license.                      *
 !*                                                                       *
 !*************************************************************************
 !*

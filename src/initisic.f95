@@ -154,7 +154,7 @@ CONTAINS
         size = nrecord*nft
         IF (size < 1000000) THEN
             m1=min(nrecord,500)  ! Maximum number of data points selected as initial solutions.                      
-                                 ! m1 <= nrecord, indirect gamma1 in algorithm, Note that m1 is adaptive -> 200.
+                                 ! m1 <= nrecord, Note that m1 is adaptive -> 200.
         ELSE IF (size <= 10000000) THEN
             m1=500
         ELSE 
