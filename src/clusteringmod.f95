@@ -31,7 +31,7 @@ MODULE clusteringmod       ! Subroutines for clustering software
                            !    validity indices.
         step1, &           ! S  Computation of the centroid and the value of
                            !    clustering function at centroid.
-        step2              ! S  Computation of clusters for each data point.
+        step2              ! S  Select the best candidate solution.
 
 CONTAINS
 
