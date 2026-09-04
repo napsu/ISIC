@@ -135,7 +135,6 @@ PROGRAM isic
         db,db2,dn,dn3,sep, & !validity indices
         f, &
         fold, &
-        fclust1, &
         fcurrent 
     REAL :: &
         time1, &
@@ -210,7 +209,7 @@ PROGRAM isic
     WRITE(42, *) 'Type of data:            ',ibig
                 !     0  - Large data
                 !     1  - Big data (no computations with full data)
-    WRITE(42, *) 'Max. canditate starting points: ',m1 
+    WRITE(42, *) 'Max. candidate starting points: ',m1 
     WRITE(42, *) 'Seed for random numbers: ',seed(1)
     
     WRITE(42, *) 'Optimization with inexact SLMB.'
@@ -304,7 +303,7 @@ PROGRAM isic
             ! Returns fcurrent in batch.
 
             ns2time=time4
-            CALL clustfull(x, f) !
+            !CALL clustfull(x, f) ! This is computed in check
 
             DO j1=1,m
                 xbest(j1)=x(j1)
@@ -337,7 +336,6 @@ PROGRAM isic
         ELSE  ! nc=1, Step 0 in SLMB-Clust algorithm
             ns2time=0.0
             CALL step1(f,x) ! computes the centroid and the value of clustering function at the centroid
-            fclust1=f 
             DO j1=1,nft ! xbest for aux-problem
                 xbest(j1)=x(j1)
             END DO
