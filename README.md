@@ -54,7 +54,7 @@ In addition, it returns a separate text file containing the final cluster center
  For batch experiments, the auxiliary Python scripts can be used to run __ISIC__ automatically over all datasets, multiple random seeds, or subsampled datasets. See the comments at the beginning of each script for usage details.
 
 ## References:
-* __ISIC and iSLMB:__
+* __ISIC and ISLMB:__
   - N. Karmitsa, J. Lampainen, K. Joki, M.M. Mäkelä, "ISIC - Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization", 2026.
 
 * __BigClust and SLMBA:__
