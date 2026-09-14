@@ -1,10 +1,10 @@
-# ISIC - Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization (bigClust 2.0)
+# ISIC - Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization
 
-__ISIC__ is a nonsmooth optimization-based clustering algorithm for solving the minimum sum-of-squares clustering (MSSC) problem on very large-scale and big datasets. __ISIC__ consists of two components: an incremental algorithm designed to produce high-quality, near-global solutions to the clustering problem, and the _stochastic inexact limited-memory bundle method_ (iSLMB), which is used at each iteration of the incremental algorithm to solve both the clustering and auxiliary clustering problems from different starting points.
+**ISIC** is a nonsmooth optimization-based clustering algorithm for solving the minimum sum-of-squares clustering (MSSC) problem on very large and big datasets. It employs an incremental clustering framework in which clusters are added one at a time. At each incremental step, the *greedy starting-point algorithm* (GSPA) constructs a promising starting center for the new cluster, and the *stochastic inexact limited-memory bundle method* (ISLMB) is used as the optimization engine for solving the resulting clustering problem.
 
-Due to its incremental structure, __ISIC__ obtains solutions not only to the _k_-partition problem but also to all intermediate _l_-partition problems where _l_=1,…,_k_-1.
+Due to its incremental structure, **ISIC** obtains solutions not only to the *k*-partition problem but also to all intermediate *l*-partition problems, where *l*=1,...,*k*-1.
 
-__ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigClust) in two main respects. First, it uses iSLMB, a stochastic variant of [__InexactLMBM__](https://github.com/napsu/InexactLMBM), as its optimization engine. This allows the optimization method to better account for the inexactness introduced by stochastic computations. Second, __ISIC__ employs a _greedy starting-point selection procedure_ that avoids the costly computations required by the original starting-point strategy.
+**ISIC** builds on the incremental framework of [**bigClust**](https://github.com/napsu/bigClust), but modifies it substantially. In particular, GSPA directly constructs a starting center for each new cluster, eliminating the need for the auxiliary clustering problems and costly multi-start procedure used in earlier incremental approaches. In addition, **ISIC** uses ISLMB, a stochastic variant of [**InexactLMBM**](https://github.com/napsu/InexactLMBM), as its optimization engine. By explicitly accommodating inexact function and subgradient information, iSLMB is well suited to the inaccuracies introduced by stochastic computations.
 
 ## Files included
 * `isic.f95`          
@@ -12,15 +12,15 @@ __ISIC__ differs from the original [__bigClust__](https://github.com/napsu/bigCl
 * `initisic.f95`  
   - Initialization of clustering parameters and InexactLMBM. Includes modules:
     + `initclust` - Initialization of parameters for clustering.
-    + `initislmb` - Initialization of iSLMB.
+    + `initislmb` - Initialization of ISLMB.
 * `clusteringmod.f95`     
   - Subroutines for clustering software.
 * `islmb.f95`              
-  - iSLMB - Stochastic inexact limited memory bundle method.
+  - ISLMB - Stochastic inexact limited memory bundle method.
 * `objfun.f95`            
   - Computation of the cluster function and subgradients values.
 * `subpro.f95`            
-  - Subprograms for iSLMB.
+  - Subprograms for ISLMB.
 * `parameters.f95`        
   - Parameters. Inludes modules:
     + `r_precision` - Precision for reals,
@@ -55,7 +55,7 @@ In addition, it returns a separate text file containing the final cluster center
 
 ## References:
 * __ISIC and iSLMB:__
-  - N. Karmitsa, J. Lampainen, K. Joki, M.M. Mäkelä, "Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization", 2026.
+  - N. Karmitsa, J. Lampainen, K. Joki, M.M. Mäkelä, "ISIC - Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization", 2026.
 
 * __BigClust and SLMBA:__
   - N. Karmitsa, V.-P. Eronen, M.M. Mäkelä, T. Pahikkala, A. Airola, "[Stochastic limited memory bundle algorithm for clustering in big data](https://www.sciencedirect.com/science/article/pii/S0031320325003140?via%3Dihub)", _Pattern Recognition_, Vol. 165,  111654, 2025.

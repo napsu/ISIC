@@ -1,7 +1,7 @@
 !*************************************************************************
 !*                                                                       *
 !*     ISIC - Stochastic Nonsmooth Optimization based                    *
-!*     Incremental Clustering Software (bigClust version 2.0)            *
+!*     Incremental Clustering Software                                   *
 !*                                                                       *
 !*     Subroutines for clustering used within ISIC software.             *
 !*                                                                       *
@@ -432,7 +432,8 @@ CONTAINS
                     d1 = d1 + (a(k,i)-a(k,j))**2
                 END DO
                 tnorm = tnorm + one
-                IF (d1 < dminim(j)) THEN
+                IF (d1 < 0.6_prec*dminim(j)) THEN
+                !IF (d1 < dminim(j)) THEN ! testi 5.9.
                     nclose     = nclose + 1
                     l4(nclose) = j
                 END IF

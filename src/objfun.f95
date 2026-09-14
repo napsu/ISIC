@@ -1,18 +1,18 @@
 !*************************************************************************
 !*                                                                       *
-!*     iSIC - Stochastic Nonsmooth Optimization based                    *
-!*     Incremental Clustering Software (bigClust version 2.0)            *
+!*     ISIC - Stochastic Nonsmooth Optimization based                    *
+!*     Incremental Clustering Software                                   *
 !*                                                                       *
 !*                                                                       *
 !*     Computation of the value of the clustering problem and the        *
 !*     corresponding subgradients. This file is specially designed       *
 !*     to solve clustering problems with stochastic inexact LMBM         *
-!*     used within iSIC software.                                        * 
+!*     used within ISIC software.                                        * 
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
 !*                                                                       *
-!*     iSIC software is covered by the MIT license.                      *
+!*     ISIC software is covered by the MIT license.                      *
 !*                                                                       *
 !*************************************************************************
 !* 
@@ -53,6 +53,7 @@ CONTAINS
             tnorm, &       ! Total number of norms computed.
             list1, &       ! Cluster assignment of each data point.
             ns, &          ! Switch: 1 = auxiliary, 2 = clustering problem.
+                           ! Note, ns=1 is not used in default version of ISIC.
             m              ! Number of variables in optimization.
         USE initislmb, ONLY : &
             nbatch, &      ! Size of the batch.
@@ -78,6 +79,7 @@ CONTAINS
         END DO
 
         IF (ns == 1) THEN   ! Auxiliary problem: dprev and distance computed once each
+            ! Not used in default version of ISIC
 
             DO k = 1, nc-1
                 tnorm = tnorm + one

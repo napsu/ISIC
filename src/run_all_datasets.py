@@ -27,19 +27,28 @@ COMBINED_OUT = SRC_DIR / "isic_all_results.txt"
 DATA_BASE = "../../../data/data_for_clustering/large_data_for_clustering"
 
 DATASETS = [
-    {"id":  1, "file": "drift.txt",          "nft": 128,  "nrecord":  13910},
+    {"id": 11, "file": "isolet.txt",          "nft": 617,  "nrecord":   7797},
+    {"id": 14, "file": "gisette.txt",         "nft": 5000, "nrecord":  13500},
+    {"id":  1, "file": "drift.txt",           "nft": 128,  "nrecord":  13910},
     {"id":  2, "file": "EEG_Eye_State2.txt",  "nft":  14,  "nrecord":  14980},
     {"id":  3, "file": "d15112.txt",          "nft":   2,  "nrecord":  15112},
+    {"id": 12, "file": "OnlineNews.txt",      "nft":  58,  "nrecord":  39644},
     {"id":  4, "file": "KEGG2.txt",           "nft":  20,  "nrecord":  53413},
     {"id":  5, "file": "shuttle.txt",         "nft":   9,  "nrecord":  58000},
+    {"id":  9, "file": "Sensorless.txt",      "nft":  48,  "nrecord":  58509},
+    {"id": 15, "file": "mfcc.txt",            "nft":  58,  "nrecord":  85134},
     {"id":  6, "file": "pla85900.txt",        "nft":   2,  "nrecord":  85900},
+    {"id": 10, "file": "music.txt",           "nft":  518, "nrecord": 106574},
+    {"id": 13, "file": "MiniBooNE_PID.txt",   "nft":  50,  "nrecord": 130064},
+    {"id": 16, "file": "prot_homo.txt",       "nft":  74,  "nrecord": 145751},
+    {"id": 17, "file": "rq3.txt",             "nft":   7,  "nrecord": 200000},
     {"id":  7, "file": "Skin_NonSkin.txt",    "nft":   3,  "nrecord": 245057},
     {"id":  8, "file": "3D.txt",              "nft":   3,  "nrecord": 434874},
-    {"id":  9, "file": "Sensorless.txt",      "nft":  48,  "nrecord":  58509},
-    {"id": 11, "file": "isolet.txt",          "nft": 617,  "nrecord":   7797},
-    {"id": 12, "file": "OnlineNews.txt",      "nft":  58,  "nrecord":  39644},
-    {"id": 13, "file": "MiniBooNE_PID.txt",   "nft":  50,  "nrecord": 130064},
-    {"id": 14, "file": "gisette.txt",         "nft": 5000, "nrecord":  13500},
+    {"id": 18, "file": "Covertype.txt",       "nft":  10,  "nrecord": 581012},
+    {"id": 20, "file": "census.txt",          "nft":  68,  "nrecord": 2458285},
+    {"id": 21, "file": "bitcoin.txt",         "nft":  8,   "nrecord": 2916697},
+    {"id": 22, "file": "hepmass.txt",         "nft":  28,  "nrecord": 10500000},
+    {"id": 19, "file": "cord.csv",            "nft":  768, "nrecord": 1056660},
 ]
 
 # ---------------------------------------------------------------------------

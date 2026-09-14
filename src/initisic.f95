@@ -1,13 +1,14 @@
 !*************************************************************************
 !*                                                                       *
 !*     ISIC - Stochastic Nonsmooth Optimization based                    *
-!*     Incremental Clustering Software (bigClust version 2.0)            *
+!*     Incremental Clustering Software                                   *
 !*                                                                       *
-!*     ISIC differs from original bigClust by using                      *
-!*     stochastic inexactLMBM as an optimization engine and              *
-!*     greedy starting point selection procedure.                        * 
+!*     ISIC is designed for solving minimum sum-of-squares clustering    *
+!*     problems in very large and big datasets. It uses a greedy         *
+!*     starting-point algorithm and stochastic inexactLMBM as its        *
+!*     optimization engine.                                              *
 !*                                                                       *
-!*     Napsu Karmitsa 2026 (last modified 16.6.2026).                    *
+!*     Napsu Karmitsa 2026 (last modified 14.9.2026).                    *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
@@ -16,7 +17,7 @@
 !*                                                                       *
 !*************************************************************************
 !*
-!*     Initialization of parameters for iSIC                              
+!*     Initialization of parameters for ISIC                              
 !*
 !*     Modules included: 
 !* 
@@ -49,6 +50,9 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
         ibig     = 0, &             ! parameter for the size of data, ibig=1 => no computations with whole data will be made
                                     ! note that this version 0.1 still reads the full data.
         ipc      = 0, &             ! Printout parameter for cluster centers (0 = no printout).
+        iaux     = 0, &             ! Auxiliary problem:
+                                    !   0  - skip aux; use the new center directly in ns=2 (default),
+                                    !   1  - solve aux clustering on the new center.
         maxdim   = nclust*nft, &    ! Maximum number of variables in optimization (do not change).
         maxsize  = 200*maxdim       ! Space for the candidate points,
                                     !   maxsize > m1*maxdim (usually equality is enough).
@@ -56,7 +60,7 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
 
     ! Input real parameters. Give values here.
     REAL, SAVE :: &
-        tlimit    = 7200.0         ! Maximum CPU-time in seconds, from user.
+        tlimit    = 7200.0          ! Maximum CPU-time in seconds, from user.
 
 
 

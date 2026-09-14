@@ -1,13 +1,14 @@
 !*************************************************************************
 !*                                                                       *
 !*     ISIC - Stochastic Nonsmooth Optimization based                    *
-!*     Incremental Clustering Software (bigClust version 2.0)            *
+!*     Incremental Clustering Software                                   *
 !*                                                                       *
-!*     ISIC differs from original bigClust by using                      *
-!*     stochastic inexactLMBM as an optimization engine and              *
-!*     greedy starting point selection procedure.                         * 
+!*     ISIC is designed for solving minimum sum-of-squares clustering    *
+!*     problems in very large and big datasets. It uses a greedy         *
+!*     starting-point algorithm and stochastic inexactLMBM as its        *
+!*     optimization engine.                                              *
 !*                                                                       *
-!*     Napsu Karmitsa 2026 (last modified 14.4.2026).                    *
+!*     Napsu Karmitsa 2026 (last modified 14.9.2026).                    *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
@@ -110,6 +111,7 @@ PROGRAM isic
                                         !   m = nft    if ns = 1,
                                         !   m = nft*nc if ns = 2.
         m1, &                           ! Maximum number of initial solutions.
+        iaux, &                         ! 1 = solve aux problem, 0 = skip aux.
         lcand, &
         def_clustpar                    ! Default values of clustering parameters.
     USE initislmb, ONLY : &             ! 
@@ -210,6 +212,9 @@ PROGRAM isic
                 !     0  - Large data
                 !     1  - Big data (no computations with full data)
     WRITE(42, *) 'Max. candidate starting points: ',m1 
+    WRITE(42, *) 'Auxiliary problem:        ',iaux
+                !     1  - Solve aux clustering
+                !     0  - Skip aux
     WRITE(42, *) 'Seed for random numbers: ',seed(1)
     
     WRITE(42, *) 'Optimization with inexact SLMB.'
@@ -227,7 +232,7 @@ PROGRAM isic
 
     !if (ibig == 0) then
         CALL getime(cputotal) 
-        !READ(78,*) ! read the first line (needed e.g. with Range-Queries-Aggregates.csv)
+        !READ(78,*) ! read the first line
         DO i=1,nrecord 
             !READ(78,'(A)', ADVANCE='NO') junk ! read the first char (needed e.g. with cord_19_embeddings_2022-06-02.csv)
             READ(78,*) (a(k,i),k=1,nft)
@@ -287,13 +292,22 @@ PROGRAM isic
             CALL step2(x2) !  Step2 computes clusters for each data point and gives inital points
             CALL getime(time4) 
             inittime = time4 - inittime
-            ns=1 ! Auxiliary clustering problem
+            !ns=1 ! Auxiliary clustering problem
 
-            CALL islmb_init(x2(1:nft),barf,time4) ! Call for inexact SLMB
-            ns1time=time4
+            !CALL islmb_init(x2(1:nft),barf,time4) ! Call for inexact SLMB
+            !ns1time=time4
             
+            !m=nft*nc
+            !ns2time=0.0
+
             m=nft*nc
             ns2time=0.0
+            ns1time=0.0
+            IF (iaux == 1) THEN
+                ns=1 ! Auxiliary clustering problem
+                CALL islmb_init(x2(1:nft),barf,time4) ! Call for inexact SLMB
+                ns1time=time4
+            END IF
 
             DO i=1,nft
                 x(i+(nc-1)*nft)=x2(i)

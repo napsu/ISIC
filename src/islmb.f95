@@ -1,12 +1,12 @@
 !*************************************************************************
 !*                                                                       *
-!*     iSLMB    - Stochastic Inexact Limited Memory Bundle Method for    *
+!*     ISLMB    - Stochastic Inexact Limited Memory Bundle Method for    *
 !*                nonsmooth nonconvex optimization                       *
 !*                                                                       *
 !*     by Napsu Karmitsa 2026 (last modified 17.4.2026)                  *
 !*                                                                       *
 !*     This file is specially modified to solve clustering problems      *
-!*     and it is part of iSIC software.                                  *
+!*     and it is part of ISIC software.                                  *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
@@ -27,7 +27,7 @@ MODULE islmb_mod  ! Stochastic Inexact Limited Memory Bundle Method
 
     ! MODULE islmb_mod includes the following subroutines (S) and functions (F).
     PUBLIC :: &
-        islmb_init    ! S Initializing iSLMB subroutine for clustering.
+        islmb_init    ! S Initializing ISLMB subroutine for clustering.
     PRIVATE :: &
         islmb, &      ! S Inexact limited memory bundle subroutine for nonsmooth
                       !   large-scale optimization. Contains:

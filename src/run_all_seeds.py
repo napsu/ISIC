@@ -1,7 +1,7 @@
 """
 run_all_seeds.py
 
-Runs all iSIC datasets multiple times with different random seeds,
+Runs all ISIC datasets multiple times with different random seeds,
 then produces per-dataset statistics tables: min/avg/max of the clustering
 function value, average CPU time, average D-B index, and average Dunn index,
 for every number of clusters nc.
@@ -59,16 +59,16 @@ DATASETS = [
     {"id":  9, "file": "Sensorless.txt",      "nft":  48,  "nrecord":  58509},
     {"id": 15, "file": "mfcc.txt",            "nft":  58,  "nrecord":  85134},
     {"id":  6, "file": "pla85900.txt",        "nft":   2,  "nrecord":  85900},
-    {"id": 10, "file": "music.txt",         "nft":  518,  "nrecord": 106574},
+    {"id": 10, "file": "music.txt",           "nft":  518,  "nrecord": 106574},
     {"id": 13, "file": "MiniBooNE_PID.txt",   "nft":  50,  "nrecord": 130064},
     {"id": 16, "file": "prot_homo.txt",       "nft":  74,  "nrecord": 145751},
     {"id": 17, "file": "rq3.txt",             "nft":   7,  "nrecord": 200000},
     {"id":  7, "file": "Skin_NonSkin.txt",    "nft":   3,  "nrecord": 245057},
     {"id":  8, "file": "3D.txt",              "nft":   3,  "nrecord": 434874},
     {"id": 18, "file": "Covertype.txt",       "nft":  10,  "nrecord": 581012},
-    {"id": 20, "file": "census.txt",       "nft":  68,  "nrecord": 2458285},
-    {"id": 21, "file": "bitcoin.txt",       "nft":  8,  "nrecord": 2916697},
-    {"id": 22, "file": "hepmass.txt",       "nft":  28,  "nrecord": 10500000},
+    {"id": 20, "file": "census.txt",          "nft":  68,  "nrecord": 2458285},
+    {"id": 21, "file": "bitcoin.txt",         "nft":  8,  "nrecord": 2916697},
+    {"id": 22, "file": "hepmass.txt",         "nft":  28,  "nrecord": 10500000},
     #{"id": 19, "file": "cord.csv",         "nft":  768,  "nrecord": 1056660},
 ]
 
@@ -204,7 +204,7 @@ def format_stats_table(stats: dict) -> str:
 # ---------------------------------------------------------------------------
 
 def main():
-    print(f"iSIC multi-seed test runner")
+    print(f"ISIC multi-seed test runner")
     print(f"  Datasets : {len(DATASETS)}")
     print(f"  Seeds    : {NROSEEDS}  {SEEDS}")
     print(f"  Output   : {SUMMARY_OUT.name}")
@@ -213,7 +213,7 @@ def main():
     shutil.copy2(INIT_FILE, BACKUP_FILE)
 
     with SUMMARY_OUT.open("w") as out:
-        out.write("iSIC — multi-seed statistics summary\n")
+        out.write("ISIC — multi-seed statistics summary\n")
         out.write(f"Seeds used ({NROSEEDS}): {SEEDS}\n")
         out.write("=" * 80 + "\n\n")
 
