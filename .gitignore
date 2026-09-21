@@ -5,6 +5,6 @@
 *.csv
 ReadMe.txt
 data/*
-!data/.gitkeep
+!data/README.md
 src/isic
 src/initisic_backup.f95
