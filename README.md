@@ -32,9 +32,9 @@ Due to its incremental structure, **ISIC** obtains solutions not only to the *k*
 
 * Auxiliary Python scripts
   - `run_all_datasets.py`
-    + Runs __ISIC__ automatically for all datasets.
+    + Runs __ISIC__ automatically for all datasets specified in the script.
   - `run_all_seeds.py`
-    + Runs all datasets with multiple random seeds and summarizes the results.
+    + Runs all datasets specified in the script with multiple random seeds and summarizes the results.
   - `run_all_seeds_subsample.py`
     + As `run_all_seeds.py`, but preserves the subsampling definition in `initisic.f95`.
 
@@ -51,24 +51,24 @@ The algorithm returns a text file containing the clustering function values, Dun
 In addition, it returns a separate text file containing the final cluster centers for the _nclust_-partition problem, as well as the solutions to all intermediate _l_-partition problems, where
  _l_ = 1,...,_nclust_-1.
 
- For batch experiments, the auxiliary Python scripts can be used to run __ISIC__ automatically over all datasets, multiple random seeds, or subsampled datasets. See the comments at the beginning of each script for usage details.
+ For batch experiments, the auxiliary Python scripts can be used to run __ISIC__ automatically over all datasets, multiple random seeds, or subsampled datasets. By default, the dataset list contains the datasets used in the numerical experiments of the accompanying paper, where the datasets and their sources are listed. Both the dataset list and the path to the data directory can be modified directly in the Python scripts through the `DATASETS` and `DATA_BASE` variables, respectively. See the comments at the beginning of each script for usage details.
 
 ## References:
 * __ISIC and ISLMB:__
-  - N. Karmitsa, J. Lampainen, K. Joki, M.M. Mäkelä, "ISIC - Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization", 2026.
+  - N. Karmitsa, J. Lampainen, K. Joki, M.M. Mäkelä, A. Airola, T. Pahikkala, "ISIC - Incremental Clustering Software Based on Stochastic Inexact Nonsmooth Optimization", 2026.
 
 * __BigClust and SLMBA:__
   - N. Karmitsa, V.-P. Eronen, M.M. Mäkelä, T. Pahikkala, A. Airola, "[Stochastic limited memory bundle algorithm for clustering in big data](https://www.sciencedirect.com/science/article/pii/S0031320325003140?via%3Dihub)", _Pattern Recognition_, Vol. 165,  111654, 2025.
     
-* __Clustering:__
-  - A. Bagirov, N. Karmitsa, S Taheri, "[Partitional Clustering via Nonsmooth Optimization](https://link.springer.com/book/10.1007/978-3-030-37826-4)", _Springer_, 2020.
-
 * __InexactLMBM:__
   - J. Lampainen, K. Joki, N. Karmitsa, M.M. Mäkelä, "[Inexact limited memory bundle method](https://arxiv.org/abs/2604.08067)", 2026. 
 
 * __LMBM:__
   - N. Haarala, K. Miettinen, M.M. Mäkelä, "[Globally Convergent Limited Memory Bundle Method for Large-Scale Nonsmooth Optimization](https://link.springer.com/article/10.1007/s10107-006-0728-2)", _Mathematical Programming_, Vol. 109, No. 1, pp. 181-205, 2007.
   - M. Haarala, K. Miettinen, M.M. Mäkelä, "[New Limited Memory Bundle Method for Large-Scale Nonsmooth Optimization](https://www.tandfonline.com/doi/abs/10.1080/10556780410001689225)", _Optimization Methods and Software_, Vol. 19, No. 6, pp. 673-692, 2004.
+
+* __Clustering:__
+  - A. Bagirov, N. Karmitsa, S Taheri, "[Partitional Clustering via Nonsmooth Optimization](https://link.springer.com/book/10.1007/978-3-031-76512-4)" (Second Edition), _Springer_, 2025.
 
 * __Nonsmooth optimization:__
   - A. Bagirov, N. Karmitsa, M.M. Mäkelä, "[Introduction to nonsmooth optimization: theory, practice and software](https://link.springer.com/book/10.1007/978-3-319-08114-4)", _Springer_, 2014.
