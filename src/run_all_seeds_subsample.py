@@ -50,7 +50,7 @@ DATASETS = [
     {"id": 20, "file": "census.txt",          "nft":  68,  "nrecord": 2458285},
     {"id": 21, "file": "bitcoin.txt",         "nft":  8,  "nrecord": 2916697},
     {"id": 22, "file": "hepmass.txt",         "nft":  28,  "nrecord": 10500000},
-    {"id": 19, "file": "cord.csv",            "nft":  768,  "nrecord": 1056660},
+    #{"id": 19, "file": "cord.csv",            "nft":  768,  "nrecord": 1056660},
 ]
 
 # ---------------------------------------------------------------------------

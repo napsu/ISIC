@@ -8,3 +8,5 @@ data/*
 !data/README.md
 src/isic
 src/initisic_backup.f95
+src/initisic_backup_seeds.f95
+initisic_backup_seeds_subsample.f95

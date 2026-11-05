@@ -32,27 +32,33 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
 
     ! Names of input and output files:
     CHARACTER(LEN=80), SAVE :: &
-        infile = '../data/Skin_NonSkin.txt',&     ! Input data 
+        infile = '../../../data/data_for_clustering/large_data_for_clustering/hepmass.txt',&     ! Input data 
         outfile0 = 'isic_centers.txt', &          ! Result file with cluster centers.
-        outfile1 = 'isic_results.txt'             ! Result file with function values,
+        outfile1 = 'isic_results_current.txt'             ! Result file with function values,
                                                   ! Davies-Bouldin (DB) validity index,
                                                   ! and cpu-time.
         
     ! Input integer parameters. Give values here.
     INTEGER, PARAMETER :: &
         nclust = 25, &          ! Maximum number of clusters, from user.
-        nft = 3, &                  ! Number of features in data, from user.
-        nrecord = 245057, &         ! Number of records in data, from user.
+        nft = 28, &                  ! Number of features in data, from user.
+        nrecord = 10500000, &         ! Number of records in data, from user.
         !
-        nrec_used = nrecord, &      ! Number of data points used at once in computations, nrec_used <= nrecord.
+        !nrec_used = nrecord, &      ! Number of data points used at once in computations, nrec_used <= nrecord.
                                     !   E.g. nrec_used = nrecord if nrecord < 100000, nrec_used = MAX(nrecord/50,10000), otherwise.        
-        !nrec_used = int(MAX(nrecord/10.0,10000.0)), &   ! 
+        nrec_used = int(MAX(nrecord/10.0,10000.0)), &   ! 
         ibig     = 0, &             ! parameter for the size of data, ibig=1 => no computations with whole data will be made
                                     ! note that this version 0.1 still reads the full data.
         ipc      = 0, &             ! Printout parameter for cluster centers (0 = no printout).
         iaux     = 0, &             ! Auxiliary problem:
                                     !   0  - skip aux; use the new center directly in ns=2 (default),
                                     !   1  - solve aux clustering on the new center.
+        iphi     = 1, &             ! Ranking of starting-point candidates in step2:
+                                    !   0  - full-sample Phi (default),
+                                    !   1  - subsampled Phi on mphi points of nrec_used.
+        mphi = INT(MIN(REAL(nrec_used), MAX(1000.0, 10.0*SQRT(REAL(nrec_used))))), &
+                                    ! Evaluation-sample size for subsampled Phi (iphi = 1).
+                                    !   Clamped to [1, nrec_used] in step2. Set by the user.
         maxdim   = nclust*nft, &    ! Maximum number of variables in optimization (do not change).
         maxsize  = 200*maxdim       ! Space for the candidate points,
                                     !   maxsize > m1*maxdim (usually equality is enough).

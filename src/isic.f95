@@ -112,6 +112,8 @@ PROGRAM isic
                                         !   m = nft*nc if ns = 2.
         m1, &                           ! Maximum number of initial solutions.
         iaux, &                         ! 1 = solve aux problem, 0 = skip aux.
+        iphi, &                         ! 0 = full-sample Phi, 1 = subsampled Phi.
+        mphi, &                         ! Evaluation-sample size when iphi = 1.
         lcand, &
         def_clustpar                    ! Default values of clustering parameters.
     USE initislmb, ONLY : &             ! 
@@ -212,6 +214,10 @@ PROGRAM isic
                 !     0  - Large data
                 !     1  - Big data (no computations with full data)
     WRITE(42, *) 'Max. candidate starting points: ',m1 
+    WRITE(42, *) 'Phi ranking:              ',iphi
+                !     0  - Full-sample Phi
+                !     1  - Subsampled Phi on mphi points of nrec_used
+    WRITE(42, *) 'Phi evaluation sample:    ',mphi
     WRITE(42, *) 'Auxiliary problem:        ',iaux
                 !     1  - Solve aux clustering
                 !     0  - Skip aux

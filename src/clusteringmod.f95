@@ -355,7 +355,9 @@ CONTAINS
             ncand, &       ! Number of canditate points.
             lcand, &       ! Data points which are selected as initial cluster centers.
             l4, &          ! Auxiliary array
-            tnorm          ! The total number of norms computed.
+            tnorm, &       ! The total number of norms computed.
+            iphi, &        ! 0 = full-sample Phi, 1 = subsampled Phi.
+            mphi           ! Evaluation-sample size when iphi = 1.
 
         IMPLICIT NONE
 
@@ -368,16 +370,23 @@ CONTAINS
             d1,d3,d21,  &
             fmin,       &
             f2,         &
-            trdist
+            trdist,     &
+            urand
 
         INTEGER ::  &
             ibest,  &
             nclose, &
             i1,     &
             i,j,    &
-            k,l
+            k,l,    &
+            mphi_use, &
+            itmp,   &
+            jswap
 
-        INTRINSIC :: MIN
+        INTEGER, ALLOCATABLE :: &
+            iphi_ind(:)     ! Indices of the evaluation sample A_Phi.
+
+        INTRINSIC :: MIN, MAX
 
         trdist = MAX(4.0_prec, LOG(REAL(nft,prec))) 
 
@@ -398,26 +407,69 @@ CONTAINS
             fmin   = large
             ibest  = 1
 
-            ! Find the candidate with the greatest improvement potential (argmin of d21).
-            DO i1=1,ncand
-                i   = lcand(i1)
-                f2  = dminim(i)
-                d21 = zero
-                loop1: DO l=1,nrecord
-                    IF (f2 < (trdist * dminim(l))) THEN
-                        d3 = zero
-                        DO k=1,nft
-                            d3 = d3 + (a(k,i)-a(k,l))**2
-                        END DO
-                        tnorm = tnorm + one
-                        d21   = d21 + MIN(zero, d3-dminim(l))
+            IF (iphi == 0) THEN
+                ! Full-sample Phi: evaluate each candidate against all of A_S.
+                DO i1=1,ncand
+                    i   = lcand(i1)
+                    f2  = dminim(i)
+                    d21 = zero
+                    loop1: DO l=1,nrecord
+                        IF (f2 < (trdist * dminim(l))) THEN
+                            d3 = zero
+                            DO k=1,nft
+                                d3 = d3 + (a(k,i)-a(k,l))**2
+                            END DO
+                            tnorm = tnorm + one
+                            d21   = d21 + MIN(zero, d3-dminim(l))
+                        END IF
+                    END DO loop1
+                    IF (d21 < fmin) THEN
+                        fmin  = d21
+                        ibest = i1
                     END IF
-                END DO loop1
-                IF (d21 < fmin) THEN
-                    fmin  = d21
-                    ibest = i1
+                END DO
+            ELSE
+                ! Subsampled Phi: evaluate each candidate on a uniform subsample A_Phi of A_S.
+                mphi_use = MAX(1, MIN(mphi, nrecord))
+                ALLOCATE(iphi_ind(nrecord))
+                DO l=1,nrecord
+                    iphi_ind(l) = l
+                END DO
+                IF (mphi_use < nrecord) THEN
+                    ! Partial Fisher-Yates: first mphi_use entries are a uniform sample of 1..nrecord.
+                    DO l=1,mphi_use
+                        CALL random_number(urand)
+                        jswap = l + INT(urand * REAL(nrecord - l + 1, prec))
+                        IF (jswap < l) jswap = l
+                        IF (jswap > nrecord) jswap = nrecord
+                        itmp = iphi_ind(l)
+                        iphi_ind(l) = iphi_ind(jswap)
+                        iphi_ind(jswap) = itmp
+                    END DO
                 END IF
-            END DO
+
+                DO i1=1,ncand
+                    i   = lcand(i1)
+                    f2  = dminim(i)
+                    d21 = zero
+                    loop_phi: DO j=1,mphi_use
+                        l = iphi_ind(j)
+                        IF (f2 < (trdist * dminim(l))) THEN
+                            d3 = zero
+                            DO k=1,nft
+                                d3 = d3 + (a(k,i)-a(k,l))**2
+                            END DO
+                            tnorm = tnorm + one
+                            d21   = d21 + MIN(zero, d3-dminim(l))
+                        END IF
+                    END DO loop_phi
+                    IF (d21 < fmin) THEN
+                        fmin  = d21
+                        ibest = i1
+                    END IF
+                END DO
+                DEALLOCATE(iphi_ind)
+            END IF
         ELSE
             ibest = 1
         END IF
