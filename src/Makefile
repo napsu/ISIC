@@ -1,7 +1,7 @@
 #*************************************************************************
 #*                                                                       *
 #*     Makefile for BigClust, the stochastic nonsmooth clustering        *
-#*     software by Napsu Karmitsa 2024 (last modified 03.04.2024).       *
+#*     software by Napsu Karmitsa 2024.                                  *
 #*                                                                       *
 #*     The work was financially supported by the Research Council of     *
 #*     Finland (Project No. #345804 and #345805).                        *
