@@ -2,9 +2,9 @@
 !*                                                                       *
 !*                                                                       *
 !*     BigClust - Stochastic Nonsmooth Optimization based                *
-!*     Incremental Clustering Software (version 0.1)                     *
+!*     Incremental Clustering Software                                   *
 !*                                                                       *
-!*     by Napsu Karmitsa 2023 (last modified 3.4.2024).                  *
+!*     by Napsu Karmitsa 2023.                                           *
 !*                                                                       *
 !*     Precision and parameters for nonsmooth optimization based         *
 !*     clustering software.                                              *
