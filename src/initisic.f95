@@ -32,7 +32,7 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
 
     ! Names of input and output files:
     CHARACTER(LEN=80), SAVE :: &
-        infile = '../../../data/data_for_clustering/large_data_for_clustering/gisette.txt',&     ! Input data 
+        infile = '../data/Skin_NonSkin.txt',&     ! Input data 
         outfile0 = 'isic_centers.txt', &          ! Result file with cluster centers.
         outfile1 = 'isic_results.txt'             ! Result file with function values,
                                                   ! Davies-Bouldin (DB) validity index,
@@ -40,9 +40,9 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
         
     ! Input integer parameters. Give values here.
     INTEGER, PARAMETER :: &
-        nclust = 25, &          ! Maximum number of clusters, from user.
-        nft = 5000, &                  ! Number of features in data, from user.
-        nrecord = 13500, &         ! Number of records in data, from user.
+        nclust = 25, &              ! Maximum number of clusters, from user.
+        nft = 3, &                  ! Number of features in data, from user.
+        nrecord = 245057, &         ! Number of records in data, from user.
         !
         nrec_used = nrecord, &      ! Number of data points used at once in computations, nrec_used <= nrecord.
                                     !   E.g. nrec_used = nrecord if nrecord < 100000, nrec_used = MAX(nrecord/10,10000), otherwise.        
