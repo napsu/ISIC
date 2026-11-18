@@ -8,7 +8,7 @@
 !*     starting-point algorithm and stochastic inexactLMBM as its        *
 !*     optimization engine.                                              *
 !*                                                                       *
-!*     Napsu Karmitsa 2026 (last modified 14.9.2026).                    *
+!*     Napsu Karmitsa 2026.                                              *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
@@ -96,7 +96,6 @@ PROGRAM isic
         maxsize, &                      ! Maximum number of candidate points of data set.
         a, &                            ! Data matrix a(nft,nrecord), from input file.
         a_used, &                       ! Partial data matrix a(nft,nrec_used), from input file.
-        xbest, &                        ! Best solution obtained
         f_prev_nc, &                    ! Objective value from the previous nc (nc-1 clusters) 
         dcent, &                        ! Distance (affinity) matrix for cluster centers
         tlimit, &                       ! Time limit, from user.
@@ -106,15 +105,15 @@ PROGRAM isic
         nrecord, &                      ! Number of instances in data, from user.
         nrec_used, &                    ! Number of data points used at the time.
         nc, &                           ! Current number of clusters, loops from 1 to nclust.
-        ns, &                           ! Switch for auxiliary and real clustering problem.
-        m, &                            ! Number of variables in optimization:
-                                        !   m = nft    if ns = 1,
-                                        !   m = nft*nc if ns = 2.
+        m, &                            ! Number of variables in optimization: m = nft*nc.
         m1, &                           ! Maximum number of initial solutions.
-        iaux, &                         ! 1 = solve aux problem, 0 = skip aux.
         iphi, &                         ! 0 = full-sample Phi, 1 = subsampled Phi.
         mphi, &                         ! Evaluation-sample size when iphi = 1.
+        iimp, &                         ! 0 = nested Phi loops, 1 = ImprovementPotential.
+        wmax, &                         ! iimp=2 work budget. <=0 means no sampling.
         lcand, &
+        ord, &                          ! iimp=1 order of points by decreasing dminim.
+        rtail, &                        ! iimp=1 suffix sums of dminim along ord.
         def_clustpar                    ! Default values of clustering parameters.
     USE initislmb, ONLY : &             ! 
         nbatch, &                       ! Size of the batch 1 <= nbatch <= nrecords
@@ -124,9 +123,9 @@ PROGRAM isic
                                         !     0  - Totally random batches
                                         !     1  - Random batches such that all indices are used at least once      
         batchind
-    USE obj_fun, ONLY : clustfull,clustfull2      ! Computation of full cluster function value
+    USE obj_fun, ONLY : clustfull2      ! Computation of full cluster function value
     USE clusteringmod                   ! Subprograms for clustering.
-    USE islmb_mod, ONLY : islmb_init      ! SLMB method for optimization.
+    USE islmb_mod, ONLY : islmb_init    ! SLMB method for optimization.
     USE exe_time, ONLY : getime         ! Execution time.
 
     IMPLICIT NONE
@@ -135,7 +134,6 @@ PROGRAM isic
     REAL(KIND=prec), DIMENSION(:), allocatable :: &
         x, x2
     REAL(KIND=prec) :: &
-        barf, &
         db,db2,dn,dn3,sep, & !validity indices
         f, &
         fold, &
@@ -145,10 +143,9 @@ PROGRAM isic
         time3, &
         time4, &
         inittime, inittime2, &
-        ns1time, &
         ns2time
     INTEGER :: &
-        i,j,k,k1,j1, &
+        i,j,k,k1, &
         nseed
     REAL :: urand    ! Random number
     !character(len=10):: junk  ! Needed e.g. with cord_19_embeddings_2022-06-02.csv
@@ -179,6 +176,7 @@ PROGRAM isic
 
     allocate(x(nclust*nft),lcand(nrec_used))
     allocate(x2(maxsize))
+    if (iimp == 1) allocate(ord(nrec_used), rtail(nrec_used+1))
 
 
     OPEN(40,file=outfile0) ! Cluster centers
@@ -218,16 +216,17 @@ PROGRAM isic
                 !     0  - Full-sample Phi
                 !     1  - Subsampled Phi on mphi points of nrec_used
     WRITE(42, *) 'Phi evaluation sample:    ',mphi
-    WRITE(42, *) 'Auxiliary problem:        ',iaux
-                !     1  - Solve aux clustering
-                !     0  - Skip aux
+    WRITE(42, *) 'Improvement potential:    ',iimp
+    WRITE(42, *) 'Work budget (iimp=2):     ',wmax
+                !     0  - Nested Phi loops
+                !     1  - ImprovementPotential (cutoff / elimination / early stop)
     WRITE(42, *) 'Seed for random numbers: ',seed(1)
     
     WRITE(42, *) 'Optimization with inexact SLMB.'
     WRITE(42, *)
     WRITE(42, *) 'nclust |', ' f                      |',' D-B       |',' Dunn      |',&
     &' Norms       |', ' CPU-time |', ' Init. time |', ' Valid. time |',&
-    &' Aux.Clust. time |', ' Clust. time |'
+    &' Clust. time |'
 
 
     !==================================================================
@@ -295,39 +294,20 @@ PROGRAM isic
             end if
             f_prev_nc = f !
             CALL getime(inittime) 
-            CALL step2(x2) !  Step2 computes clusters for each data point and gives inital points
+            CALL step2(x, x2) !  Step2 computes clusters for each data point and gives inital points
             CALL getime(time4) 
             inittime = time4 - inittime
-            !ns=1 ! Auxiliary clustering problem
-
-            !CALL islmb_init(x2(1:nft),barf,time4) ! Call for inexact SLMB
-            !ns1time=time4
-            
-            !m=nft*nc
-            !ns2time=0.0
 
             m=nft*nc
             ns2time=0.0
-            ns1time=0.0
-            IF (iaux == 1) THEN
-                ns=1 ! Auxiliary clustering problem
-                CALL islmb_init(x2(1:nft),barf,time4) ! Call for inexact SLMB
-                ns1time=time4
-            END IF
 
             DO i=1,nft
                 x(i+(nc-1)*nft)=x2(i)
             END DO
-            ns=2
             CALL islmb_init(x,fcurrent,time4) ! Call for inexact SLMB
             ! Returns fcurrent in batch.
 
             ns2time=time4
-            !CALL clustfull(x, f) ! This is computed in check
-
-            DO j1=1,m
-                xbest(j1)=x(j1)
-            END DO
 
             
             !================================================================
@@ -356,9 +336,6 @@ PROGRAM isic
         ELSE  ! nc=1, Step 0 in SLMB-Clust algorithm
             ns2time=0.0
             CALL step1(f,x) ! computes the centroid and the value of clustering function at the centroid
-            DO j1=1,nft ! xbest for aux-problem
-                xbest(j1)=x(j1)
-            END DO
             
 
             !================================================================
@@ -442,7 +419,7 @@ PROGRAM isic
         WRITE(40,141) time4
         WRITE(40,*)
         WRITE(40,*)
-        WRITE(42,603) nc,fold,db,dn,tnorm,time4,inittime,inittime2,ns1time,ns2time
+        WRITE(42,603) nc,fold,db,dn,tnorm,time4,inittime,inittime2,ns2time
     END DO outerloop
     WRITE(42, *)
     
@@ -455,7 +432,7 @@ PROGRAM isic
 141 FORMAT('CPU time:                                         ',f12.3)
 142 FORMAT('The total number of norms:                  ',i18)
 543 FORMAT('The value of the cluster function:',f28.6)
-603 FORMAT(i4,f38.4,f12.4,f12.4,f15.0,f10.2,f10.2,f10.2,f10.2,f10.2)
+603 FORMAT(i4,f38.4,f12.4,f12.4,f15.0,f10.2,f10.2,f10.2,f10.2)
     
     CLOSE(40)
     CLOSE(42)
@@ -463,6 +440,8 @@ PROGRAM isic
         
     deallocate(x,lcand)
     deallocate(x2)
+    if (allocated(ord)) deallocate(ord)
+    if (allocated(rtail)) deallocate(rtail)
     deallocate(seed)
 
     STOP

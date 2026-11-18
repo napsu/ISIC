@@ -3,7 +3,7 @@
 !*     ISLMB    - Stochastic Inexact Limited Memory Bundle Method for    *
 !*                nonsmooth nonconvex optimization                       *
 !*                                                                       *
-!*     by Napsu Karmitsa 2026 (last modified 17.4.2026)                  *
+!*     by Napsu Karmitsa 2026.                                           *
 !*                                                                       *
 !*     This file is specially modified to solve clustering problems      *
 !*     and it is part of ISIC software.                                  *
@@ -61,7 +61,6 @@ CONTAINS
             nrecord => nrec_used, &     ! Number of records
             nft, &         ! Number of used features
             nc, &          ! Current number of clusters
-            ns, &          ! Switch for auxiliary and real clustering problem
             m              ! Number of variables for function calculations
         USE initislmb, ONLY : & 
             n, &           ! Number of variables
@@ -108,9 +107,8 @@ CONTAINS
                            !              -6  - Unspecified error.
         INTEGER :: i,mc
 
-        ! Number of variables
-        IF(ns.EQ.1) n = nft
-        IF(ns.EQ.2) n = nc*nft
+        ! Number of variables in the full clustering problem.
+        n = nc*nft
         m=n
 
         DO i = 1, n
@@ -189,8 +187,7 @@ CONTAINS
             mfe          ! Maximum number of function evaluations.
         USE initclust, ONLY : &
             f_prev_nc, & ! Cluster function value with l=k-1.
-            nrecord => nrec_used, & ! Number of used records in data.
-            ns           ! Switch for auxiliary and cluster problems
+            nrecord => nrec_used  ! Number of used records in data.
         USE obj_fun, ONLY : &
             myfg         ! Combined computation of objective value and subgradient.
 
@@ -796,11 +793,8 @@ CONTAINS
       
 
     ! Printout the final results
-    if (ns==2) then
-        CALL wprint(iterm,iprint,nout)
-        CALL rprint(n,nit,nfe,nge,x,f,xnorm,half*gnorm+alfv,iterm,iprint)
-        
-    end if
+    CALL wprint(iterm,iprint,nout)
+    CALL rprint(n,nit,nfe,nge,x,f,xnorm,half*gnorm+alfv,iterm,iprint)
 
 CONTAINS
 

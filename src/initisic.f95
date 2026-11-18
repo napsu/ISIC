@@ -8,7 +8,7 @@
 !*     starting-point algorithm and stochastic inexactLMBM as its        *
 !*     optimization engine.                                              *
 !*                                                                       *
-!*     Napsu Karmitsa 2026 (last modified 14.9.2026).                    *
+!*     Napsu Karmitsa 2026.                                              *
 !*                                                                       *
 !*     This work was part of the PRIVIDEMA project funded by the         *
 !*     European Union under Grant Agreement No. 101167964.               *
@@ -32,33 +32,35 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
 
     ! Names of input and output files:
     CHARACTER(LEN=80), SAVE :: &
-        infile = '../../../data/data_for_clustering/large_data_for_clustering/hepmass.txt',&     ! Input data 
+        infile = '../../../data/data_for_clustering/large_data_for_clustering/gisette.txt',&     ! Input data 
         outfile0 = 'isic_centers.txt', &          ! Result file with cluster centers.
-        outfile1 = 'isic_results_current.txt'             ! Result file with function values,
+        outfile1 = 'isic_results.txt'             ! Result file with function values,
                                                   ! Davies-Bouldin (DB) validity index,
                                                   ! and cpu-time.
         
     ! Input integer parameters. Give values here.
     INTEGER, PARAMETER :: &
         nclust = 25, &          ! Maximum number of clusters, from user.
-        nft = 28, &                  ! Number of features in data, from user.
-        nrecord = 10500000, &         ! Number of records in data, from user.
+        nft = 5000, &                  ! Number of features in data, from user.
+        nrecord = 13500, &         ! Number of records in data, from user.
         !
-        !nrec_used = nrecord, &      ! Number of data points used at once in computations, nrec_used <= nrecord.
-                                    !   E.g. nrec_used = nrecord if nrecord < 100000, nrec_used = MAX(nrecord/50,10000), otherwise.        
-        nrec_used = int(MAX(nrecord/10.0,10000.0)), &   ! 
-        ibig     = 0, &             ! parameter for the size of data, ibig=1 => no computations with whole data will be made
-                                    ! note that this version 0.1 still reads the full data.
+        nrec_used = nrecord, &      ! Number of data points used at once in computations, nrec_used <= nrecord.
+                                    !   E.g. nrec_used = nrecord if nrecord < 100000, nrec_used = MAX(nrecord/10,10000), otherwise.        
+        !nrec_used = int(MAX(nrecord/10.0,10000.0)), &   ! 
+        ibig     = 0, &             ! parameter for the size of data, ibig=1 => no computations with whole data will be made.
+                                    ! The full data is still read.
         ipc      = 0, &             ! Printout parameter for cluster centers (0 = no printout).
-        iaux     = 0, &             ! Auxiliary problem:
-                                    !   0  - skip aux; use the new center directly in ns=2 (default),
-                                    !   1  - solve aux clustering on the new center.
-        iphi     = 1, &             ! Ranking of starting-point candidates in step2:
+        iphi     = 0, &             ! Ranking of starting-point candidates in step2:
                                     !   0  - full-sample Phi (default),
                                     !   1  - subsampled Phi on mphi points of nrec_used.
         mphi = INT(MIN(REAL(nrec_used), MAX(1000.0, 10.0*SQRT(REAL(nrec_used))))), &
                                     ! Evaluation-sample size for subsampled Phi (iphi = 1).
                                     !   Clamped to [1, nrec_used] in step2. Set by the user.
+        iimp     = 2, &             ! Improvement-potential ranking in step2:
+                                    !   0  - Nested loops,
+                                    !   1  - ImprovementPotential (hard cutoff, bound elimination, early stop).
+                                    !   2  - Per-cluster cutoff (default), U(a) branch-and-bound,
+                                    !        early-abandon distances, ball B from those distances.
         maxdim   = nclust*nft, &    ! Maximum number of variables in optimization (do not change).
         maxsize  = 200*maxdim       ! Space for the candidate points,
                                     !   maxsize > m1*maxdim (usually equality is enough).
@@ -66,7 +68,9 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
 
     ! Input real parameters. Give values here.
     REAL, SAVE :: &
-        tlimit    = 7200.0          ! Maximum CPU-time in seconds, from user.
+        tlimit    = 7200.0, &       ! Maximum CPU-time in seconds, from user.
+        wmax      = -1.0            ! Work budget for iimp=2. <=0 means theta=1 (no sampling).
+        !wmax      = 10.0*REAL(nrec_used)*MIN(1.0,100.0/REAL(nft)) ! Use only with large dimensions
 
 
 
@@ -75,7 +79,6 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
         a(nft,nrecord), &           ! Data matrix, from input file, give the name of the file above.
         a_used(nft,nrec_used), &    ! Partial data matrix.
         tnorm, &                    ! The total number of norms computed.
-        xbest(maxdim), &            ! Best solution obtained.
         dcent(nclust,nclust), &     ! Distance (affinity) matrix for cluster centers
         dminim(nrec_used), &        ! Distance of a(i) and the nearest centroid.
         f_prev_nc                   ! Objective value from the previous nc (nc-1 clusters)
@@ -83,10 +86,7 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
     ! Other integer parameters.
     INTEGER, SAVE :: &              !
         nc, &                       ! Current number of clusters, loops from 1 to nclust
-        ns, &                       ! Switch for auxiliary and real clustering problem.
-        m, &                        ! Number of variables in optimization:
-                                    !   m = nft    if ns = 1,
-                                    !   m = nft*nc if ns = 2.
+        m, &                        ! Number of variables in optimization: m = nft*nc.
         m1, &                       ! Maximum number of datapoints selected as initial 
                                     !   solutions, m1 <= nrecord. Initialized in def_clusterpar below.
         ncand, &                    ! Number of canditate points.
@@ -96,9 +96,12 @@ MODULE initclust  ! Initialization of parameters for clustering codes.
                                     !   points are in cluster i.
         l4(nrec_used)               ! Auxiliary array
 
-    ! Allocatable tables
+    ! Allocatable tables. ord and rtail are used only by iimp = 1.
     INTEGER, SAVE, DIMENSION(:), allocatable :: &
-        lcand                       ! lcand(ncand), Data points which are selected as initial cluster centers.
+        lcand, &                    ! lcand(ncand), Data points which are selected as initial cluster centers.
+        ord                         ! Indices of data points in decreasing dminim order.
+    REAL(KIND=prec), SAVE, DIMENSION(:), allocatable :: &
+        rtail                       ! Suffix sums of dminim in ord order; rtail(nrec_used+1)=0.
 
 
 CONTAINS
@@ -181,9 +184,7 @@ MODULE initislmb  ! Initialization of parameters for inexact SLMB.
         mfe     = 1000, &         ! Maximum number of function evaluations: mfe = maxbatch*nth
         mtesf   = MAX(mnma+5,10), & ! Maximum number of iterations with changes of
                                   !   function values smaller than tolf (default = 10)
-        iprint  =    1, &         ! Printout specification (only for real clustering problem, 
-                                  !   for aux clustering problem the printout is cancelled in islmb.f95,   
-                                  !   select either 0 or 1):
+        iprint  =    1, &         ! Printout specification (select either 0 or 1):
                                   !    -1  - No printout
                                   !     0  - Only the error messages
                                   !     1  - The final values of the objective function
@@ -235,16 +236,11 @@ CONTAINS
 
     SUBROUTINE init_slmbpar()  ! Subroutine for further initialization of parameters.
 
-        USE initclust, ONLY : ns, nc, nrec_used
+        USE initclust, ONLY : nrec_used
         IMPLICIT NONE
 
-        IF (ns == 1) THEN
-            maxbatch = 1        ! Number of different batches (aux. problem)
-            nth     = 20        ! Number of iterations after which a new batch is selected
-        ELSE 
-            maxbatch = MAX(20, INT(0.15 * SQRT(REAL(nrec_used)))) ! Number of different batches (clustering problem)
-            nth     = 10        ! Number of iterations after which a new batch is selected
-        END IF
+        maxbatch = MAX(20, INT(0.15 * SQRT(REAL(nrec_used)))) ! Number of different batches
+        nth      = 10        ! Number of iterations after which a new batch is selected
                 
     END SUBROUTINE init_slmbpar
 
